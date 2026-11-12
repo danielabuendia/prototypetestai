@@ -1,0 +1,1910 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#F7F5F1">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Unstick">
+<meta name="description" content="Unstick: one small task to help you start when you feel creatively stuck. Prototype.">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns=%27http://www.w3.org/2000/svg%27 viewBox=%270 0 64 64%27%3E%3Cellipse cx=%2732%27 cy=%2732%27 rx=%2728%27 ry=%2724%27 fill=%27%23F7D85F%27 stroke=%27%23141414%27 stroke-width=%275%27/%3E%3C/svg%3E">
+<title>Unstick</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Caveat:wght@500;700&family=Inter:wght@400;600&family=Instrument+Serif:ital@0;1&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #F7F5F1; --ink: #141414; --muted: #444;
+    --coral: #EE6A4A; --blue: #5E9CF2; --green: #8DF0A7; --pink: #F5A7D2; --yellow: #F7D85F; --sky: #BFE0FF; --peach: #F8D6C8;
+    --serif: 'Instrument Serif', Georgia, serif; --script: 'Caveat', 'Comic Sans MS', cursive; --sans: 'Inter', system-ui, sans-serif; --mono: 'Space Mono', 'Courier New', monospace;
+    color-scheme: light;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; background: #EDE8DF; color: var(--ink); font-family: var(--sans);
+    min-height: 100vh; display: flex; justify-content: center; align-items: flex-start;
+    gap: 40px; padding: 32px 16px; flex-wrap: wrap;
+  }
+  button { font: inherit; color: inherit; cursor: pointer; }
+  :focus-visible { outline: 3px solid var(--blue); outline-offset: 3px; }
+
+  .phone {
+    width: 390px; height: min(800px, calc(100dvh - 48px)); border: 10px solid var(--ink); border-radius: 52px;
+    background: var(--bg); position: relative; overflow: hidden; flex: none; box-shadow: 0 20px 50px rgba(0,0,0,.18);
+  }
+  .island { position: absolute; top: 10px; left: 50%; transform: translateX(-50%); width: 100px; height: 28px; background: var(--ink); border-radius: 20px; z-index: 5; }
+  .screen { position: absolute; inset: 0; padding: 60px 22px 24px; overflow-y: auto; overflow-x: hidden; display: none; }
+  .screen.active { display: block; }
+  .screen.has-nav { padding-bottom: 96px; }
+  .fill-calm { background: linear-gradient(180deg, #F7F5F1 0%, #BFE0FF 55%, #8DF0A7 100%); }
+  .fill-warm { background: linear-gradient(180deg, #F7F5F1 0%, #F8D6C8 60%, #F5A7D2 100%); }
+  .screen.locked { background: #141414 !important; color: #F7F5F1; }
+  .screen.locked .small { color: #C9C4BA; }
+  .screen.locked .script, .screen.locked h2 { color: #F7F5F1; }
+  .screen.locked .pill:disabled { opacity: 1; background: #BFE0FF; }
+  .screen.locked .deco { display: none; }
+
+  h1, h2 { font-family: var(--serif); font-weight: 400; margin: 0; letter-spacing: -.5px; line-height: .98; }
+  h1 { font-size: 46px; } h2 { font-size: 34px; }
+  h3.sub { font-family: var(--serif); font-weight: 400; font-size: 24px; margin: 18px 0 4px; }
+  .script { font-family: var(--script); font-weight: 700; font-size: 22px; }
+  p { margin: 10px 0; line-height: 1.45; font-size: 16px; }
+  .small { font-size: 14px; color: var(--muted); }
+  .hl { background: linear-gradient(transparent 60%, var(--pink) 60%); }
+  .hl-green { background: linear-gradient(transparent 60%, var(--green) 60%); }
+  .italic { font-style: italic; }
+
+  /* playful pieces */
+  .sticker { display: inline-block; border: 2.5px solid var(--ink); background: var(--yellow); border-radius: 12px; padding: 6px 12px; font-family: var(--script); font-weight: 700;
+    font-size: 21px; transform: rotate(-3deg); box-shadow: 3px 3px 0 var(--ink); line-height: 1.1; }
+  .sticker.pink { background: var(--pink); transform: rotate(2.5deg); } .sticker.green { background: var(--green); transform: rotate(-1.5deg); } .sticker.white { background: #fff; }
+  .tilt { display: inline-block; transform: rotate(-2deg); }
+  .deco { position: absolute; pointer-events: none; z-index: 0; }
+  .above { position: relative; z-index: 1; }
+
+  .blob {
+    border: 2.5px solid var(--ink); background: var(--coral); min-height: 60px; padding: 14px 34px;
+    border-radius: 52% 48% 56% 44% / 58% 46% 54% 42%; font-family: var(--serif); font-size: 22px; display: inline-block; transition: transform .12s; box-shadow: 3px 3px 0 var(--ink);
+  }
+  .blob.yellow { background: var(--yellow); } .blob.green { background: var(--green); }
+  .blob:disabled { opacity: .45; cursor: not-allowed; }
+  .blob:active:not(:disabled) { transform: translate(2px, 2px); box-shadow: 1px 1px 0 var(--ink); }
+  .pill {
+    border: 2.5px solid var(--ink); border-radius: 999px 999px 999px 999px / 60% 60% 60% 60%; min-height: 52px; padding: 12px 20px;
+    background: var(--blue); color: var(--ink); font-family: var(--script); font-weight: 700; font-size: 22px; text-align: center; display: block; width: 100%; box-shadow: 3px 3px 0 var(--ink);
+  }
+  .pill.coral { background: var(--coral); } .pill.green { background: var(--green); } .pill.pink { background: var(--pink); } .pill.yellow { background: var(--yellow); } .pill.white { background: #fff; } .pill.flat { box-shadow: none; }
+  .pill:disabled { opacity: .6; cursor: default; }
+  .pill:active:not(:disabled) { transform: translate(2px, 2px); box-shadow: 1px 1px 0 var(--ink); }
+  .pill .desc { display: block; font-family: var(--sans); font-weight: 400; font-size: 13px; margin-top: 2px; }
+  .row > .pill { padding: 10px 6px; font-size: 19px; line-height: 1.1; min-width: 0; }
+  .link { background: none; border: 0; text-decoration: underline; font-size: 15px; padding: 12px 4px; min-height: 44px; }
+  .row { display: flex; gap: 10px; } .row > * { flex: 1; }
+  .center { text-align: center; }
+  .stack > * + * { margin-top: 12px; }
+  .nudge { transform: rotate(-1deg); } .nudge2 { transform: rotate(1.2deg); } .nudge3 { transform: rotate(-.6deg); }
+
+  .chip { border: 2px solid var(--ink); border-radius: 999px; padding: 10px 16px; min-height: 46px; background: #fff; color: #141414; font-size: 16.5px; line-height: 1.3; text-align: left; }
+  .chip[aria-pressed="true"] { background: var(--green); font-weight: 600; }
+  .chips { display: flex; gap: 8px; margin: 10px 0; flex-direction: column; align-items: stretch; }
+  .chips.wrap { flex-direction: row; flex-wrap: wrap; }
+
+  .rates { display: flex; justify-content: space-between; margin: 18px 0 6px; }
+  .rate { width: 54px; height: 54px; border-radius: 50%; border: 2.5px solid var(--ink); background: #fff; font-family: var(--serif); font-size: 26px; }
+  .rate[aria-pressed="true"] { background: var(--yellow); transform: scale(1.1); }
+  .rate-ends { display: flex; justify-content: space-between; font-size: 14px; color: var(--muted); }
+
+  .card { border: 2.5px solid var(--ink); border-radius: 26px 22px 28px 20px; padding: 18px; background: #fff; }
+  .card.pink { background: var(--pink); } .card.yellow { background: var(--yellow); } .card.green { background: var(--green); } .card.sky { background: var(--sky); }
+  .tag { display: inline-block; border: 2px solid var(--ink); border-radius: 999px; padding: 3px 12px; font-size: 14px; background: var(--pink); color: var(--ink); }
+  .switch { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-top: 10px; }
+  .switch input { width: 26px; height: 26px; accent-color: var(--ink); flex: none; }
+
+  .big-time { font-family: var(--serif); font-size: 96px; line-height: 1; margin: 34px 0 6px; }
+  label.f { display: block; font-size: 14px; font-weight: 600; margin: 12px 0 4px; }
+  textarea, input[type=text], input[type=email], input[type=password], input[type=number] { width: 100%; border: 2.5px solid var(--ink); border-radius: 18px; padding: 13px; font: inherit; font-size: 16px; background: #fff; }
+  textarea { min-height: 150px; resize: vertical; }
+
+  .list { list-style: none; padding: 0; margin: 14px 0 0; }
+  .list li { border: 2px solid var(--ink); border-radius: 18px; padding: 12px 14px; background: #fff; margin-bottom: 10px; }
+  .list .head { display: flex; justify-content: space-between; align-items: baseline; gap: 8px; }
+  .list .head strong { font-family: var(--serif); font-weight: 400; font-size: 20px; }
+
+  .seg { display: inline-flex; border: 2px solid var(--ink); border-radius: 999px; overflow: hidden; margin: 4px 0; flex-wrap: wrap; }
+  .seg button { border: 0; background: #fff; padding: 8px 14px; font-size: 14px; min-height: 40px; }
+  .seg button[aria-pressed="true"] { background: var(--ink); color: #fff; }
+
+  .grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; margin-top: 14px; }
+  .tile { border: 2.5px solid var(--ink); border-radius: 20px; background: #fff; overflow: hidden; text-align: left; padding: 0; display: block; width: 100%; }
+  .tile .art { aspect-ratio: 1; display: flex; align-items: center; justify-content: center; background: var(--yellow); position: relative; overflow: hidden; }
+  .tile .art img { width: 100%; height: 100%; object-fit: cover; }
+  .tile .art svg { width: 100%; height: 100%; }
+  .tile .art .words { padding: 12px; font-family: var(--serif); font-size: 18px; line-height: 1.1; display: -webkit-box; -webkit-line-clamp: 6; -webkit-box-orient: vertical; overflow: hidden; width: 100%; }
+  .tile .cap, .wallcard .cap { padding: 8px 10px; font-size: 13px; border-top: 2px solid var(--ink); }
+  .tile .cap b, .wallcard .cap b { font-weight: 600; display: block; }
+  .meto { display: block; margin: 0; width: 100%; border: 0; border-top: 2px solid var(--ink); background: #fff; padding: 8px; font-size: 13px; min-height: 40px; }
+  .meto[aria-pressed="true"] { background: var(--pink); font-weight: 600; }
+  .wallcard { border: 2.5px solid var(--ink); border-radius: 20px; overflow: hidden; background: #fff; }
+  .photo-btn { cursor: pointer; position: relative; }
+  .photo-btn input { position: absolute; opacity: 0; width: 1px; height: 1px; }
+  .preview { width: 100%; max-height: 260px; object-fit: cover; border: 2.5px solid var(--ink); border-radius: 20px; margin-top: 12px; }
+
+  .stamps { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; margin-top: 12px; }
+  .stamp { border: 2.5px solid var(--ink); border-radius: 50%; aspect-ratio: 1; background: #fff; display: flex; flex-direction: column; align-items: center; justify-content: center;
+    padding: 4px; font-size: 12px; line-height: 1.1; text-align: center; min-width: 0; overflow: hidden; }
+  .stamp b { font-family: var(--serif); font-weight: 400; font-size: 16px; display: block; line-height: 1; word-break: break-word; }
+  .stamp.got { background: var(--green); }
+  .playbadge { position: absolute; right: 8px; bottom: 8px; width: 30px; height: 30px; border-radius: 50%; background: #fff; border: 2px solid var(--ink); display: flex; align-items: center; justify-content: center; font-size: 12px; }
+  .stamp:nth-child(3n+2) { margin-top: 14px; }
+  .bar-wrap { height: 12px; border: 2px solid var(--ink); border-radius: 999px; background: #fff; overflow: hidden; margin: 8px 0 4px; }
+  .bar-fill { height: 100%; background: var(--coral); width: 0; }
+  .dots { display: flex; gap: 8px; margin: 8px 0 2px; }
+  .dot { width: 22px; height: 22px; border-radius: 50%; border: 2px solid var(--ink); background: #fff; }
+  .dot.on { background: var(--coral); }
+
+  .avatar { width: 92px; height: 92px; border-radius: 50%; border: 3px solid var(--ink); background: var(--pink); overflow: hidden; display: flex; align-items: center; justify-content: center;
+    font-family: var(--serif); font-size: 44px; flex: none; box-shadow: 3px 3px 0 var(--ink); }
+  .avatar img { width: 100%; height: 100%; object-fit: cover; }
+  .prof { display: flex; gap: 16px; align-items: center; }
+  .kitopt { border: 2.5px solid var(--ink); border-radius: 22px; background: #fff; padding: 14px 16px; width: 100%; text-align: left; display: block; }
+  .kitopt[aria-pressed="true"] { background: var(--green); }
+  .kitopt b { font-family: var(--serif); font-weight: 400; font-size: 22px; display: block; }
+
+  @keyframes pulse { 0% { box-shadow: 3px 3px 0 var(--ink), 0 0 0 0 rgba(238,106,74,.55); } 70% { box-shadow: 3px 3px 0 var(--ink), 0 0 0 16px rgba(238,106,74,0); } 100% { box-shadow: 3px 3px 0 var(--ink), 0 0 0 0 rgba(238,106,74,0); } }
+  .pulse { animation: pulse 1.8s ease-out infinite; }
+  details.fold { border: 2.5px solid var(--ink); border-radius: 20px; background: #fff; padding: 2px 16px; margin-top: 12px; }
+  details.fold summary { font-family: var(--serif); font-size: 22px; padding: 12px 0; cursor: pointer; }
+  details.fold[open] summary { border-bottom: 2px solid var(--ink); margin-bottom: 10px; }
+  details.fold[open] { padding-bottom: 12px; }
+  .bigbtn { min-height: 66px; font-size: 25px; }
+  .hold { position: relative; overflow: hidden; width: 100%; min-height: 56px; border: 2.5px solid #F7F5F1; border-radius: 999px;
+    background: transparent; color: #F7F5F1; font-family: var(--script); font-weight: 700; font-size: 21px; padding: 12px 20px; touch-action: none; user-select: none; }
+  .hold .bar { position: absolute; left: 0; top: 0; bottom: 0; width: 0; background: rgba(247,245,241,.28); transition: width 0s; }
+  .hold.holding .bar { width: 100%; transition: width 2s linear; }
+  .hold .txt { position: relative; }
+
+  .toast { position: absolute; left: 22px; right: 22px; bottom: 96px; background: var(--ink); color: #fff; border-radius: 16px; padding: 12px 16px; font-size: 14px; z-index: 8; display: none; }
+  .toast.show { display: block; }
+
+  .nav { position: absolute; left: 0; right: 0; bottom: 0; height: 76px; background: var(--bg); border-top: 2px solid var(--ink); display: none; z-index: 4; }
+  .nav.show { display: flex; }
+  .nav button { flex: 1; background: none; border: 0; font-family: var(--script); font-weight: 700; font-size: 21px; padding: 10px 0 0; min-height: 44px; }
+  .nav button[aria-current="page"] { text-decoration: underline wavy var(--coral); text-underline-offset: 6px; }
+
+  /* prompt vibe */
+  #prompt, #timer { transition: none; }
+  #p-title { transition: none; }
+  .slip { display: inline-block; border: 2.5px dashed currentColor; border-radius: 10px; padding: 8px 12px; font-family: var(--script); font-weight: 700; font-size: 21px; line-height: 1.1; background: rgba(255,255,255,.55); transform: rotate(-1.5deg); }
+  @keyframes floaty { 0%,100% { transform: translateY(0); } 50% { transform: translateY(-8px); } }
+  .float { animation: floaty 5s ease-in-out infinite; }
+  @keyframes wob { 0%,100% { transform: rotate(-2deg); } 50% { transform: rotate(2deg); } }
+  .wob { animation: wob 3s ease-in-out infinite; }
+
+  .notes { width: 430px; max-width: 100%; }
+  .notes h3 { font-family: var(--serif); font-weight: 400; font-size: 30px; margin: 0 0 8px; }
+  .notes ol { padding-left: 20px; margin: 0; }
+  .notes li { margin-bottom: 12px; line-height: 1.45; }
+  .notes b { font-weight: 600; }
+  .ctl { background: #fff; border: 2px solid var(--ink); border-radius: 14px; padding: 12px 14px; margin: 14px 0; }
+  .ctl h4 { margin: 0 0 8px; font-size: 15px; }
+  .ctl label { display: flex; align-items: center; gap: 10px; margin: 8px 0; }
+  .ctl input[type=checkbox] { width: 22px; height: 22px; accent-color: var(--ink); }
+  .ctl .tbtn { border: 2px solid var(--ink); border-radius: 999px; background: #fff; padding: 8px 14px; font-size: 14px; margin: 4px 6px 4px 0; min-height: 40px; }
+  .ctl .seg { margin-top: 6px; }
+
+
+  /* ---------- stop-motion layer ---------- */
+  @keyframes boil { 0% { transform: rotate(-1.2deg) translate(0,0); } 33% { transform: rotate(1deg) translate(1px,-1px); } 66% { transform: rotate(-.4deg) translate(-1px,1px); } 100% { transform: rotate(-1.2deg) translate(0,0); } }
+  @keyframes jit { 0% { transform: rotate(calc(var(--r, 0deg) - .5deg)) translate(0,0); } 33% { transform: rotate(calc(var(--r, 0deg) + .6deg)) translate(1px,-1px); } 66% { transform: rotate(var(--r, 0deg)) translate(-1px,1px); } 100% { transform: rotate(calc(var(--r, 0deg) - .5deg)) translate(0,0); } }
+  @keyframes cutin { from { transform: translateY(20px) rotate(.8deg); opacity: 0; } to { transform: none; opacity: 1; } }
+  @keyframes twist { from { transform: rotate(0deg); } to { transform: rotate(90deg); } }
+  @keyframes burst { 0% { transform: translate(0,0) rotate(0) scale(.4); opacity: 1; } 100% { transform: translate(var(--dx), var(--dy)) rotate(var(--rot)) scale(1); opacity: 0; } }
+  .sticker { animation: boil 1s steps(1) infinite; }
+  .wob { animation: boil .9s steps(1) infinite; }
+  #prompt.active { animation: cutin .5s steps(4) both; }
+  .confetti { position: absolute; width: 14px; height: 14px; border: 2px solid var(--ink); z-index: 6; pointer-events: none; animation: burst .8s steps(6) forwards; }
+
+  details.fold summary { list-style: none; display: flex; justify-content: space-between; align-items: center; }
+  details.fold summary::-webkit-details-marker { display: none; }
+  details.fold summary::after { content: ''; width: 34px; height: 34px; flex: none; animation: boil 1s steps(1) infinite;
+    background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 40 40'%3E%3Cg stroke='%23141414' stroke-width='3.6' stroke-linecap='round' fill='none'%3E%3Cpath d='M20 6 L21 34'/%3E%3Cpath d='M7 13 L33 27'/%3E%3Cpath d='M33 12 L8 28'/%3E%3C/g%3E%3C/svg%3E") center / contain no-repeat; }
+  details.fold[open] summary::after { animation: twist .5s steps(4) forwards; }
+
+  .nav button { font-size: 18px; padding: 6px 0 0; }
+  .nav button svg { width: 26px; height: 26px; display: block; margin: 0 auto 1px; }
+  /* menu: your three drawn icons, black until you are on that screen */
+  .nav button svg { width: 38px; height: auto; margin: 0 auto 0; overflow: visible; }
+  .nav button svg .m { fill: #010101; stroke: #010101; stroke-width: 2.5; stroke-linejoin: round; transition: fill .18s; }
+  .nav button svg .w { fill: #fff; stroke: #fff; stroke-width: 1; }
+  .nav button[aria-current="page"] svg .m { fill: var(--on); }
+  .nav button { padding-top: 4px; }
+
+  .nav button[aria-current="page"] svg { animation: boil .9s steps(1) infinite; }
+  .today { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 12px; }
+
+
+  /* ---------- the wall: pinned polaroids with emoji stickers ---------- */
+  #g-grid { gap: 18px 14px; margin-top: 18px; }
+  .wallcard { position: relative; overflow: visible; border: 2.5px solid var(--ink); border-radius: 6px 12px 8px 14px; padding: 8px 8px 4px; background: #fff; box-shadow: 3px 3px 0 var(--ink); }
+  #g-grid .wallcard:nth-child(odd) { transform: rotate(-1.6deg); }
+  #g-grid .wallcard:nth-child(even) { transform: rotate(1.4deg); margin-top: 10px; }
+  .wallcard::before { content: ''; position: absolute; top: -10px; left: 50%; width: 56px; height: 18px; background: rgba(247,216,95,.9); border: 1.5px solid rgba(20,20,20,.35); transform: translateX(-50%) rotate(-4deg); z-index: 2; }
+  .wallcard .art { border: 2px solid var(--ink); border-radius: 4px; aspect-ratio: 1; display: flex; align-items: center; justify-content: center; overflow: hidden; background: var(--yellow); }
+  .wallcard .art img, .wallcard .art svg { width: 100%; height: 100%; object-fit: cover; }
+  .wallcard .art .words { padding: 10px; font-family: var(--serif); font-size: 17px; line-height: 1.1; display: -webkit-box; -webkit-line-clamp: 6; -webkit-box-orient: vertical; overflow: hidden; width: 100%; }
+  .wallcard .cap { border-top: 0; padding: 8px 2px 2px; font-size: 13px; }
+  .stickers { display: flex; flex-wrap: wrap; gap: 6px; justify-content: center; padding: 4px 0 6px; }
+  .stk { width: 34px; height: 34px; border-radius: 50%; border: 2px solid var(--ink); background: #fff; font-size: 17px; line-height: 1; padding: 0; transform: rotate(var(--sr, 0deg)); box-shadow: 2px 2px 0 var(--ink); }
+  .stk[aria-pressed="true"] { background: var(--pink); }
+  .stk.pop { animation: stkpop .36s steps(3); }
+  @keyframes stkpop { 0% { transform: rotate(var(--sr, 0deg)) scale(.7); } 50% { transform: rotate(calc(var(--sr, 0deg) + 14deg)) scale(1.35); } 100% { transform: rotate(var(--sr, 0deg)) scale(1); } }
+
+  /* ---------- places strip on Home ---------- */
+  .strip { display: flex; gap: 10px; overflow-x: auto; padding: 6px 4px 12px; margin: 0 -4px; scroll-snap-type: x proximity; }
+  .strip .stamp { flex: none; width: 96px; height: 96px; margin-top: 0 !important; scroll-snap-align: start; }
+
+
+  /* ---------- the wall as a feed (one column, big images) ---------- */
+  .today { display: block; }
+  .today .pill { width: 100%; margin-top: 12px; }
+  .feed { display: flex; flex-direction: column; gap: 22px; margin-top: 16px; }
+  .post { border: 2.5px solid var(--ink); border-radius: 22px; background: #fff; box-shadow: 3px 3px 0 var(--ink); overflow: hidden; }
+  .ph { display: flex; align-items: center; gap: 10px; padding: 10px 12px; }
+  .ph > div { min-width: 0; }
+  .pav { width: 38px; height: 38px; border-radius: 50%; border: 2px solid var(--ink); flex: none; overflow: hidden; display: block; }
+  .pav svg { width: 100%; height: 100%; display: block; }
+  .ph strong { display: block; font-size: 14px; line-height: 1.2; }
+  .ph .ptag { margin-left: auto; font-size: 12px; padding: 2px 10px; background: var(--pink); flex: none; max-width: 45%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .pm { border-top: 2px solid var(--ink); border-bottom: 2px solid var(--ink); aspect-ratio: 1; background: var(--yellow); position: relative; overflow: hidden; display: flex; align-items: center; justify-content: center; }
+  .pm img, .pm > svg { width: 100%; height: 100%; object-fit: cover; display: block; }
+  .pnote { padding: 24px; font-family: var(--serif); font-size: 30px; line-height: 1.08; width: 100%; }
+  .paudio { padding: 8px 12px 0; }
+  .paudio audio { width: 100%; }
+  .pact { display: flex; gap: 12px; padding: 10px 12px 4px; }
+  .post .stk { width: 46px; height: 46px; font-size: 23px; }
+  .pcap { margin: 0; padding: 2px 14px 14px; font-size: 14px; color: var(--muted); }
+  /* the wall, second version: open posts, rounded picture, drawn icons that fill with color when tapped */
+  .feed { gap: 30px; }
+  .post { border: 0; background: transparent; box-shadow: none; border-radius: 0; overflow: visible; }
+  .ph { padding: 0 2px 10px; }
+  .ph .ptag { max-width: 52%; border-width: 2px; font-size: 12.5px; }
+  .pm { border: 3px solid var(--ink); border-radius: 28px; }
+  .paudio { padding: 10px 4px 0; }
+
+  /* welcome screen: big stacked type, like the Figma */
+  #welcome { background: var(--bg) !important; padding-top: 44px; }
+  .wl { position: relative; z-index: 1; margin: 0; }
+  .wl .a { display: block; font-family: var(--serif); font-weight: 400; font-size: 56px; line-height: .98; letter-spacing: -1px; }
+  .wl .b { display: block; font-family: var(--script); font-weight: 700; font-size: 58px; line-height: .95; color: #F08CBF; margin-top: 8px; letter-spacing: 0; }
+  .wl .c { display: block; font-family: var(--serif); font-weight: 400; font-size: 38px; line-height: 1.05; margin-top: 12px; letter-spacing: -.5px; }
+  .wl .d { display: block; font-family: var(--serif); font-size: 26px; line-height: 1; margin-top: 10px; }
+  .wl .arr { display: inline-block; vertical-align: -10px; margin-left: 10px; }
+  .wl .ast { position: absolute; left: 100%; top: 8px; margin-left: 14px; }
+  .wl .e { position: relative; display: inline-block; font-family: var(--script); font-weight: 700; font-size: 78px; line-height: .9; color: #5E9CF2; margin-top: 0; }
+  .u-coral { display: inline-block; padding-bottom: 12px; background: url("data:image/svg+xml;utf8,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 200 14' preserveAspectRatio='none'%3E%3Cpath d='M2 9 C 30 2, 60 14, 100 7 S 170 3, 198 8' fill='none' stroke='%23EE6A4A' stroke-width='6' stroke-linecap='round'/%3E%3C/svg%3E") no-repeat 0 100% / 100% 14px; }
+  .u-green { display: inline-block; padding-bottom: 11px; background: url("data:image/svg+xml;utf8,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 200 14' preserveAspectRatio='none'%3E%3Cpath d='M2 9 C 30 2, 60 14, 100 7 S 170 3, 198 8' fill='none' stroke='%238DF0A7' stroke-width='6' stroke-linecap='round'/%3E%3C/svg%3E") no-repeat 0 100% / 100% 13px; }
+  .tag-blue { position: absolute; z-index: 2; top: 34px; left: 20px; background: #5E9CF2; color: #fff; font-family: var(--script); font-weight: 700; font-size: 20px; padding: 2px 14px; border-radius: 12px; transform: rotate(-6deg); }
+  .wdeco { position: absolute; pointer-events: none; z-index: 0; }
+  .wsub { position: relative; z-index: 1; font-size: 16px; line-height: 1.4; margin: 14px 0 0; max-width: 300px; }
+  #auth-sub { font-family: var(--script); font-weight: 700; font-size: 26px; color: var(--ink); margin: 4px 0 14px; }
+  .dots { display: flex; gap: 10px; justify-content: center; margin: 22px 0 18px; }
+  .dots i { width: 11px; height: 11px; border-radius: 50%; border: 2.5px solid #141414; background: #fff; display: block; }
+  .dots i.on { background: #EE6A4A; }
+  /* sign up / log in fields, like the Figma */
+  #auth-form input { border: 2.5px solid var(--ink); border-radius: 18px; min-height: 56px; padding: 0 18px; font-size: 16px; color: #141414; }
+  #auth-form.signup input { background: linear-gradient(90deg, #8DF0A7, #C9F8D6); }
+  #auth-form.login input { background: linear-gradient(90deg, #F7D85F, #F2E6A8); }
+  #auth-form input::placeholder { color: #4a4a4a; }
+  #auth-form label.f { font-size: 13px; margin-top: 14px; display: block; }
+  /* "what do you make" blobs */
+  #y-chips { gap: 12px; margin-top: 18px; }
+  #y-chips .chip { padding: 18px 22px; min-height: 64px; font-family: var(--script); font-weight: 700; font-size: 24px; text-align: center; background: #fff; }
+  #y-chips .chip:nth-child(4n+1) { border-radius: 58% 42% 55% 45% / 50% 60% 40% 50%; }
+  #y-chips .chip:nth-child(4n+2) { border-radius: 40% 60% 45% 55% / 55% 45% 55% 45%; }
+  #y-chips .chip:nth-child(4n+3) { border-radius: 52% 48% 38% 62% / 45% 55% 45% 55%; }
+  #y-chips .chip:nth-child(4n+4) { border-radius: 45% 55% 60% 40% / 60% 40% 60% 40%; }
+  #y-chips .chip[aria-pressed="true"] { background: var(--yellow); }
+  /* home buttons */
+  .homebtns { display: grid; gap: 14px; margin-top: 22px; }
+  .homebtns .two { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+  .homebtns .pill { width: 100%; }
+  .homebtns .two .pill { padding-left: 12px; padding-right: 12px; }
+  .homebtns .two .pill span:first-child { font-size: 20px; }
+  .who { display: grid; gap: 10px; margin: 8px 0 0; }
+  .who button { border: 2.5px solid var(--ink); border-radius: 22px; background: var(--yellow); color: #141414; padding: 12px 16px; text-align: left; }
+  .who button b { font-family: var(--serif); font-weight: 400; font-size: 22px; display: block; }
+  .who button[aria-pressed="true"] { background: var(--green); box-shadow: 3px 3px 0 var(--ink); }
+  .stepper { display: flex; align-items: center; justify-content: center; gap: 22px; margin: 10px 0 4px; }
+  .step-btn { width: 56px; height: 56px; border-radius: 50%; border: 2.5px solid var(--ink); background: #fff; color: #141414; font-size: 30px; line-height: 1; box-shadow: 3px 3px 0 var(--ink); }
+  .step-btn:disabled { opacity: .35; box-shadow: none; }
+  .step-val { min-width: 110px; text-align: center; color: inherit; }
+  .step-val b { font-family: var(--serif); font-weight: 400; font-size: 64px; line-height: 1; display: block; }
+  .step-val span { font-size: 16px; }
+  .refresh { position: absolute; right: 22px; top: 50px; z-index: 2; width: 52px; height: 52px; border-radius: 50%; border: 2.5px solid var(--ink); background: #fff; color: #141414; display: flex; align-items: center; justify-content: center; box-shadow: 3px 3px 0 var(--ink); }
+  .refresh svg { width: 26px; height: 26px; }
+  .artbox { margin: 14px 0 6px; max-width: 320px; } .artbox.sm { max-width: 190px; margin: 10px 0 0; }
+  .stepslist { margin: 14px 0 6px; padding: 0; list-style: none; counter-reset: stp; }
+  .stepslist li { counter-increment: stp; display: grid; grid-template-columns: 38px 1fr; gap: 12px; align-items: start; font-size: 21px; line-height: 1.3; margin-bottom: 14px; }
+  .stepslist li::before { content: counter(stp); width: 34px; height: 34px; border-radius: 50%; border: 2.5px solid #141414; background: #fff; color: #141414; font-family: var(--serif); font-size: 20px; display: flex; align-items: center; justify-content: center; }
+  #you { background: var(--bg); }
+  #you h2 { font-size: 56px; line-height: .95; margin: 14px 0 0; letter-spacing: -1px; position: relative; z-index: 1; }
+  #you h2 .th { display: inline-block; font-style: italic; color: #EE6A4A; padding-bottom: 12px; background: url("data:image/svg+xml;utf8,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 200 14' preserveAspectRatio='none'%3E%3Cpath d='M2 9 C 30 2, 60 14, 100 7 S 170 3, 198 8' fill='none' stroke='%23F5A7D2' stroke-width='9' stroke-linecap='round'/%3E%3C/svg%3E") no-repeat 0 100% / 100% 14px; }
+  #you .tag-blue { top: 78px; left: auto; right: 22px; font-size: 18px; transform: rotate(-4deg); }
+  #y-chips { gap: 10px 12px; margin-top: 16px; justify-content: center; }
+  #y-chips .chip { flex: 1 1 42%; min-height: 84px; font-size: 25px; padding: 12px 16px; background: #fff; }
+  #y-chips .chip:last-child { flex: 1 1 62%; min-height: 70px; }
+  #y-chips .chip[aria-pressed="true"] { background: var(--c, var(--yellow)); box-shadow: 3px 3px 0 var(--ink); }
+
+  #home h1 { margin-top: 2px; }
+  #home .hq { margin: 10px 0 0; font-size: 19px; font-weight: 400; }
+  .homebtns { margin-top: 16px; gap: 12px; }
+  .homebtns .nudge { padding-top: 26px; padding-bottom: 26px; }
+  .hcard { margin-top: 18px; background: #fff; border: 2.5px solid var(--ink); border-radius: 20px; padding: 14px 16px; box-shadow: 3px 3px 0 var(--ink); }
+  .hcard .lab { font-family: var(--script); font-weight: 700; font-size: 20px; color: #E86AA6; margin: 0; }
+  .hcard .row1 { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
+  .hcard h3 { font-family: var(--serif); font-weight: 400; font-size: 26px; margin: 0; line-height: 1.05; }
+  .hcard .sub { font-size: 14px; margin: 2px 0 0; color: #444; }
+  .tryit { border: 2.5px solid var(--ink); background: var(--yellow); border-radius: 999px; padding: 8px 16px; font-family: var(--serif); font-size: 19px; color: var(--ink); box-shadow: 2px 2px 0 var(--ink); }
+  .stamps { display: flex; gap: 7px; margin-top: 12px; align-items: center; }
+  .stamps i { width: 17px; height: 17px; border-radius: 50%; border: 2px solid var(--ink); background: #fff; display: block; flex: none; }
+  .stamps i.on { background: var(--green); }
+  .stamps span { font-size: 13px; margin-left: 6px; color: #444; line-height: 1.25; }
+  .hmm { margin-top: 14px; border: 2.5px dashed var(--ink); border-radius: 20px; padding: 12px 16px; background: #FFF7D6; display: flex; align-items: center; justify-content: space-between; gap: 10px; }
+  .hmm b { font-family: var(--script); font-size: 21px; display: block; line-height: 1.1; }
+  .hmm span.d { font-size: 13.5px; color: #333; }
+  .hnote { text-align: center; font-size: 13px; color: #555; margin: 14px 0 20px; }
+
+  .hmm { margin-top: 20px; }
+  .big { display: grid; gap: 14px; margin-top: 18px; }
+  .big .pill { width: 100%; display: flex; flex-direction: column; align-items: center; justify-content: center; }
+  .big .pill span:first-child { font-size: 34px; line-height: 1.05; }
+  .big .pill .desc { font-size: 16px; margin-top: 4px; }
+  .big .b1 { min-height: 160px; }
+  .big .b2, .big .b3 { min-height: 112px; }
+  .big .b1 span:first-child { font-size: 40px; }
+  #makes { gap: 10px; }
+  #makes .chip { font-family: var(--script); font-weight: 700; font-size: 21px; padding: 8px 18px; min-height: 46px; text-align: center; }
+  #makes .chip:nth-child(4n+1) { border-radius: 58% 42% 55% 45% / 50% 60% 40% 50%; }
+  #makes .chip:nth-child(4n+2) { border-radius: 40% 60% 45% 55% / 55% 45% 55% 45%; }
+  #makes .chip:nth-child(4n+3) { border-radius: 52% 48% 38% 62% / 45% 55% 45% 55%; }
+  #makes .chip:nth-child(4n+4) { border-radius: 45% 55% 60% 40% / 60% 40% 60% 40%; }
+  #makes .chip[aria-pressed="true"] { background: var(--yellow); }
+  .orient { margin: 10px 0 8px; padding-left: 22px; font-size: 17px; line-height: 1.4; }
+  .orient li { margin-bottom: 6px; }
+  .req { color: #B3261E; font-weight: 700; }
+
+  #demo-fab { display: none; position: fixed; right: 12px; top: 12px; z-index: 60; border: 2px solid var(--ink); border-radius: 999px; background: #fff; padding: 8px 14px; font-size: 13px; box-shadow: 2px 2px 0 var(--ink); }
+  #demo-panel { display: none; position: fixed; right: 12px; top: 54px; z-index: 60; width: min(340px, calc(100vw - 28px)); max-height: 70vh; overflow: auto; margin: 0; box-shadow: 3px 3px 0 var(--ink); }
+  #demo-panel.open { display: block; }
+  body.demo #demo-fab { display: block; }
+  body { padding-top: 24px; padding-bottom: 24px; }
+
+  @media (max-width: 760px) {
+    body { padding: 0; gap: 0; display: block; }
+    .phone { width: 100%; height: 100vh; height: 100dvh; border: 0; border-radius: 0; box-shadow: none; }
+    .island { display: none; } .screen { padding-top: 40px; } .notes { padding: 20px 16px 40px; width: 100%; }
+  }
+  @media (prefers-reduced-motion: reduce) { * { transition: none !important; animation: none !important; } }
+  .why { margin: 14px 4px 0; padding: 4px 0 4px 14px; border-left: 4px solid currentColor; font-family: var(--serif); font-style: italic; font-size: 19px; line-height: 1.25; }
+</style>
+</head>
+<body>
+
+<main class="phone" aria-label="Unstick app demo">
+  <div class="island" aria-hidden="true"></div>
+  <div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+  <!-- WELCOME -->
+  <section class="screen active" id="welcome" aria-labelledby="t-welcome">
+    <span class="tag-blue" aria-hidden="true">creative block</span>
+    <svg class="wdeco" style="right:34px;top:78px" width="34" height="34" viewBox="0 0 34 34" aria-hidden="true"><path d="M17 2 V32 M2 17 H32 M6.5 6.5 L27.5 27.5 M27.5 6.5 L6.5 27.5" stroke="#F7D85F" stroke-width="3.2" stroke-linecap="round"/></svg>
+    <h1 id="t-welcome" class="wl" style="margin-top:34px">
+      <span class="a" style="font-size:68px">Stuck?</span>
+      <span class="a"><span class="u-coral">It’s normal.</span></span>
+      <span class="b" style="font-size:58px;margin-top:14px">Try a quick<br>warm-up.</span>
+      <span class="d" style="margin-top:20px">get<svg class="arr" width="30" height="40" viewBox="0 0 36 52" aria-hidden="true"><path d="M26 4 C 12 12, 8 30, 16 44 M6 36 L16 46 L27 37" fill="none" stroke="#F7D85F" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
+      <span class="e">unstick<svg class="ast" width="60" height="60" viewBox="0 0 64 64" aria-hidden="true"><path d="M32 6 V58 M9.5 19 L54.5 45 M54.5 19 L9.5 45" stroke="#EE6A4A" stroke-width="11" stroke-linecap="round"/></svg></span>
+    </h1>
+    <p class="wsub" data-i18n="w_sub2"></p>
+    <div class="center" style="margin-top:22px;position:relative;z-index:1">
+      <button class="blob yellow" id="w-start" data-i18n="w_btn"></button><br>
+      <button class="link" id="w-login" data-i18n="w_login"></button>
+    </div>
+  </section>
+
+    <!-- AUTH (demo) -->
+  <section class="screen" id="auth" aria-labelledby="t-auth">
+    <button class="link" id="auth-back" data-i18n="back"></button>
+    <h2 id="t-auth" style="font-size:46px;margin-top:6px"></h2>
+    <p class="small" id="auth-sub"></p>
+    <form id="auth-form" novalidate>
+      <div id="auth-name-wrap"><label class="f" for="a-name" data-i18n="au_name"></label><input type="text" id="a-name" autocomplete="name" maxlength="40"></div>
+      <label class="f" for="a-email" data-i18n="au_email"></label><input type="email" id="a-email" autocomplete="email" inputmode="email">
+      <label class="f" for="a-pass" data-i18n="au_pass"></label><input type="password" id="a-pass" autocomplete="current-password"><p class="small" id="a-hint" style="margin:6px 0 0"></p>
+      <p class="small" id="auth-why" style="margin-top:12px"></p>
+      <p class="small" id="auth-err" role="alert" style="color:#B3261E;font-weight:600;margin-bottom:0"></p>
+      <div class="center" style="margin-top:16px"><button class="blob yellow" type="submit" id="auth-go"></button></div>
+    </form>
+    <div class="center">
+      <button class="link" id="auth-toggle"></button>
+    </div>
+    <p class="small center" data-i18n="au_terms"></p>
+    <p class="small center" data-i18n="au_demo"></p>
+  </section>
+
+  <!-- WHAT DO YOU MAKE -->
+  <section class="screen" id="you" aria-labelledby="t-you">
+    <span class="tag-blue" aria-hidden="true">creativity</span>
+    <h2 id="t-you" data-i18n-html="y_title"></h2>
+    <p style="margin-top:12px" data-i18n="y_sub"></p>
+    <div class="chips wrap" id="y-chips"></div>
+    <div class="center" style="margin-top:20px">
+      <button class="link" id="y-skip" data-i18n="y_skip"></button><br>
+      <button class="blob yellow" id="y-go" data-i18n="y_go"></button>
+    </div>
+  </section>
+
+  <!-- HOW IT WORKS (3 pictures, skippable) -->
+  <section class="screen" id="tour" aria-labelledby="t-tour" style="background: linear-gradient(180deg, #F7F5F1 30%, #BFE0FF 100%);">
+    <button class="link" id="tour-skip" style="position:absolute;right:14px;top:48px;z-index:2" data-i18n="tour_skip"></button>
+    <p class="script" id="tour-kick" style="margin:8px 0 0;color:#E86AA6;font-size:28px"></p>
+    <div id="tour-art" class="artbox" style="max-width:300px;margin:18px auto 0"></div>
+    <h1 id="t-tour" style="font-size:42px;text-align:center;margin-top:20px"></h1>
+    <p id="tour-text" style="text-align:center;font-size:19px;margin:10px 10px 0"></p>
+    <div class="dots" id="tour-dots" aria-hidden="true"></div>
+    <div class="center"><button class="blob yellow" id="tour-next"></button></div>
+  </section>
+
+  <!-- HOME -->
+  <section class="screen has-nav" id="home" aria-labelledby="t-home" style="background: linear-gradient(180deg, #F7F5F1 30%, #F6C4B6 100%);">
+    <div class="card green" id="fu-card" style="display:none;margin-bottom:16px">
+      <p style="margin-top:0"><strong data-i18n="f_q"></strong></p>
+      <div class="stack" id="f-choices">
+        <button class="pill white" data-fu="yes" data-i18n="f_yes"></button>
+        <button class="pill white" data-fu="notyet" data-i18n="f_notyet"></button>
+        <button class="pill white" data-fu="skip" data-i18n="f_skip"></button>
+      </div>
+      <div id="f-more" style="display:none">
+        <p style="margin-bottom:4px"><label for="f-note" id="f-note-label"></label></p>
+        <input type="text" id="f-note" maxlength="120">
+        <div class="center" style="margin-top:12px"><button class="blob yellow" id="f-save" data-i18n="f_save"></button></div>
+      </div>
+    </div>
+    <p class="script" style="margin:0;color:#E86AA6" id="h-hello"></p>
+    <h1 id="t-home" data-i18n-html="h_title"></h1>
+    <p class="hq" data-i18n="h_q"></p>
+    <div class="big">
+      <button class="pill coral nudge b1" data-need="start"><span data-i18n="n_start"></span><span class="desc" data-i18n="n_start_d"></span></button>
+      <button class="pill green nudge3 b2" data-need="surprise"><span data-i18n="n_surprise"></span><span class="desc" data-i18n="n_surprise_d"></span></button>
+      <button class="pill nudge2 b3" style="background:#5E9CF2" data-need="hard"><span data-i18n="n_hard"></span><span class="desc" data-i18n="n_hard_d"></span></button>
+    </div>
+  </section>
+
+  <!-- CHECK-IN -->
+  <section class="screen" id="checkin" aria-labelledby="t-checkin">
+    <button class="link" data-back data-i18n="back"></button>
+    <h2 id="t-checkin" data-i18n="c_title"></h2>
+    <p style="margin-bottom:2px"><strong data-i18n="c_q"></strong> <span class="small" data-i18n="c_hint"></span></p>
+    <div class="chips" id="blockers"></div>
+    <p style="margin-top:16px;margin-bottom:2px"><strong data-i18n="c_want"></strong> <span class="req" data-i18n="c_req"></span></p>
+    <div class="chips wrap" id="wants"></div>
+    <div id="rate-before-wrap" style="display:none">
+      <p style="margin-top:14px"><strong data-i18n="c_rate"></strong></p>
+      <div class="rates" role="group" id="rates-before"></div>
+      <div class="rate-ends"><span data-i18n="easy"></span><span data-i18n="hard"></span></div>
+    </div>
+    <div class="center" style="margin-top:18px">
+      <button class="blob" id="go-prompt" disabled data-i18n="c_go"></button>
+    </div>
+  </section>
+
+  <!-- TASK (takes on a different vibe per prompt) -->
+  <section class="screen" id="prompt" aria-labelledby="t-prompt">
+    <div class="deco" id="p-deco" aria-hidden="true" style="inset:0"></div>
+    <button class="link above" data-back data-i18n="back"></button>
+    <button class="refresh" id="p-swap" aria-label="Show a different warm-up"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 11a8 8 0 1 0-2.3 5.7"/><path d="M20 4v7h-7"/></svg></button>
+    <p class="script above" id="p-kind" style="margin-bottom:0"></p>
+    <h1 class="above" id="t-prompt" style="margin-top:6px"></h1>
+    <div class="above artbox" id="p-art"></div>
+    <p class="above why" id="p-why"></p>
+    <p class="above" id="p-time" style="margin:18px 0 0;text-align:center;font-family:var(--script);font-weight:700;font-size:27px"></p>
+    <div class="above" id="p-expect-wrap" style="display:none">
+      <label class="small" for="p-expect" style="color:inherit" data-i18n="p_expect"></label>
+      <input type="text" id="p-expect" maxlength="140">
+    </div>
+    <div class="center above" style="margin-top:22px">
+      <button class="blob" id="p-start" data-i18n="p_start"></button>
+    </div>
+  </section>
+
+  <!-- HOW TO DO IT (instructions with an illustration, then Go) -->
+  <section class="screen" id="steps" aria-labelledby="t-steps">
+    <div class="deco" id="s-deco" aria-hidden="true" style="inset:0"></div>
+    <button class="link above" id="st-back" data-i18n="back"></button>
+    <p class="script above" style="margin-bottom:0" data-i18n="s_how"></p>
+    <h1 class="above" id="t-steps" style="margin-top:6px;font-size:38px"></h1>
+    <div class="above artbox sm" id="s-art"></div>
+    <ol class="above stepslist" id="s-list"></ol>
+    <p class="above small" id="s-note" style="color:inherit"></p>
+    <div class="center above" style="margin-top:18px">
+      <button class="blob" id="s-go" data-i18n="s_go"></button>
+    </div>
+  </section>
+
+  <!-- TIMER -->
+  <section class="screen center" id="timer" aria-labelledby="t-timer">
+    <div class="deco" id="t-deco" aria-hidden="true" style="inset:0"></div>
+    <p class="script above" id="t-timer" style="margin-top:56px;margin-bottom:0" data-i18n="t_phone"></p>
+    <div class="big-time above" role="timer" id="clock">1:00</div>
+    <p class="above" id="t-task" style="margin:18px 0 0;font-size:19px;line-height:1.45;white-space:pre-line;text-align:left"></p>
+    <div class="row above" style="margin-top:44px" id="t-controls">
+      <button class="pill pink" id="t-pause" data-i18n="t_pause"></button>
+      <button class="pill coral" id="t-early" data-i18n="t_early"></button>
+    </div>
+    <div id="t-lockbox" class="above" style="margin-top:40px;display:none">
+      <button class="hold" id="t-hold" aria-label="Emergency exit. Press and hold for 2 seconds to unlock."><span class="bar"></span><span class="txt" data-i18n="k_hold"></span></button>
+    </div>
+  </section>
+
+  <!-- TIME'S UP -->
+  <section class="screen fill-warm" id="timeup" aria-labelledby="t-timeup">
+    <h1 id="t-timeup" data-i18n="u_title"></h1>
+    <p style="font-size:18px;margin-top:14px" data-i18n="u_q"></p>
+    <div class="stack" style="margin-top:20px">
+      <button class="pill coral nudge" id="u-save"><span data-i18n="u_save"></span><span class="desc" data-i18n="u_save_d"></span></button>
+      <button class="pill yellow nudge2" id="u-more" data-i18n="u_more"></button>
+    </div>
+    <div class="center"><button class="link" id="u-done" data-i18n="u_skip"></button></div>
+  </section>
+
+  <!-- AFTER (test mode only) -->
+  <section class="screen" id="after" aria-labelledby="t-after">
+    <h2 id="t-after" data-i18n="a_title"></h2>
+    <div class="rates" role="group" id="rates-after"></div>
+    <div class="rate-ends"><span data-i18n="easy"></span><span data-i18n="hard"></span></div>
+    <div class="center" style="margin-top:40px"><button class="blob yellow" id="a-go" disabled data-i18n="a_go"></button></div>
+  </section>
+
+  <!-- DONE -->
+  <section class="screen" id="done" aria-labelledby="t-done" style="background: linear-gradient(180deg, #F7F5F1 35%, #F7D85F 100%);">
+    <div class="center" style="margin-top:6px"><svg viewBox="0 0 120 100" width="120" height="100" aria-hidden="true"><path d="M60 8 L66 26 L84 20 L74 36 L92 44 L72 50 L80 68 L62 58 L52 76 L48 56 L28 62 L40 46 L22 36 L42 34 L40 14 L54 26Z" fill="#EE6A4A" stroke="#141414" stroke-width="3" stroke-linejoin="round"/><path d="M44 46 L56 58 L78 34" fill="none" stroke="#141414" stroke-width="6" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+    <h1 id="t-done" style="text-align:center;margin-top:8px" data-i18n="r_title"></h1>
+    <p id="d-text" style="font-size:19px;margin-top:12px;text-align:center" data-i18n="r_text"></p>
+    <p style="margin-bottom:2px;margin-top:22px"><strong data-i18n="d_feel_q"></strong></p>
+    <div class="chips wrap" id="d-feel" role="group"></div>
+    <div class="stack" style="margin-top:20px">
+      <button class="pill coral" id="d-back" data-i18n="d_backbtn"></button>
+      <button class="pill" id="d-again" data-need="hard"></button>
+    </div>
+    <div class="center" style="margin-top:6px"><button class="link" id="d-add" data-i18n="d_add"></button></div>
+    <label class="switch"><span data-i18n="d_follow"></span><input type="checkbox" id="d-follow"></label>
+  </section>
+
+  <!-- ADD -->
+  <section class="screen" id="add" aria-labelledby="t-add" style="background: linear-gradient(180deg, #F7F5F1 30%, #F4B8A8 100%);">
+    <button class="link" id="add-back" data-i18n="back"></button>
+    <h2 id="t-add" data-i18n="ad_title"></h2>
+    <p class="small" data-i18n="ad_sub"></p>
+    <div class="seg" role="group" aria-label="Type">
+      <button data-addtype="photo" aria-pressed="true" data-i18n="ad_photo"></button>
+      <button data-addtype="note" aria-pressed="false" data-i18n="ad_note"></button>
+      <button data-addtype="sound" aria-pressed="false" data-i18n="ad_sound"></button>
+      <button data-addtype="clip" aria-pressed="false" data-i18n="ad_clip"></button>
+    </div>
+    <div id="ad-photo">
+      <label class="pill white photo-btn" style="margin-top:12px"><span data-i18n="ad_pick_photo"></span><input type="file" id="ad-file-photo" accept="image/*"></label>
+      <img class="preview" id="ad-prev-photo" alt="" style="display:none">
+    </div>
+    <div id="ad-note" style="display:none;margin-top:12px">
+      <label for="ad-text" class="small" data-i18n="ad_text_label"></label>
+      <textarea id="ad-text" maxlength="800"></textarea>
+    </div>
+    <div id="ad-sound" style="display:none">
+      <button class="pill coral" id="rec-btn" style="margin-top:12px"></button>
+      <p class="small" id="rec-status" aria-live="polite" style="margin:6px 0"></p>
+      <label class="pill white photo-btn" style="margin-top:4px"><span data-i18n="ad_pick_sound"></span><input type="file" id="ad-file-sound" accept="audio/*"></label>
+      <audio id="ad-prev-sound" controls style="display:none;width:100%;margin-top:12px"></audio>
+      <p class="small" data-i18n="ad_sound_note"></p>
+    </div>
+    <div id="ad-clip" style="display:none">
+      <label class="pill white photo-btn" style="margin-top:12px"><span data-i18n="ad_pick_clip"></span><input type="file" id="ad-file-clip" accept="video/*"></label>
+      <video id="ad-prev-clip" controls playsinline style="display:none;width:100%;margin-top:12px;border:2.5px solid var(--ink);border-radius:20px"></video>
+      <p class="small" data-i18n="ad_clip_note"></p>
+    </div>
+    <label class="f" for="ad-title"><span data-i18n="ad_name"></span> <span class="small" data-i18n="optional"></span></label>
+    <input type="text" id="ad-title" maxlength="50">
+    <p style="margin:18px 0 0"><strong data-i18n="ad_who"></strong></p>
+    <input type="checkbox" id="ad-share" style="display:none" aria-hidden="true" tabindex="-1">
+    <div class="who" role="group" aria-label="Who can see this">
+      <button data-who="me" aria-pressed="true"><b data-i18n="ad_me"></b><span class="small" style="color:#141414" data-i18n="ad_me_d"></span></button>
+      <button data-who="wall" aria-pressed="false"><b data-i18n="ad_wall"></b><span class="small" style="color:#141414" data-i18n="ad_wall_d"></span></button>
+    </div>
+    <div class="center" style="margin-top:20px">
+      <button class="blob green" id="ad-save" disabled data-i18n="ad_save"></button><br>
+      <button class="link" id="ad-skip" data-i18n="ad_skip"></button>
+    </div>
+  </section>
+
+  <!-- LIBRARY (Mine | Together) -->
+  <section class="screen has-nav" id="library" aria-labelledby="t-lib">
+    <h2 id="t-lib" data-i18n="l_title"></h2>
+    <div class="seg" role="group" aria-label="View">
+      <button data-view="mine" aria-pressed="true" data-i18n="l_mine"></button>
+      <button data-view="together" aria-pressed="false" data-i18n="l_together"></button>
+    </div>
+    <div id="view-mine">
+      <p class="small" data-i18n="l_sub"></p>
+      <button class="link" id="l-how-toggle" style="padding-left:0" data-i18n="lh_link"></button>
+      <div class="card" id="l-how" style="display:none;margin-bottom:12px">
+        <strong data-i18n="lh_title"></strong>
+        <ol class="small" style="padding-left:18px;color:#141414;margin:8px 0 0">
+          <li data-i18n="lh1"></li><li data-i18n="lh2"></li><li data-i18n="lh3"></li>
+        </ol>
+      </div>
+      <button class="pill yellow nudge" id="l-add" data-i18n="l_add"></button>
+      <div class="seg" role="group" aria-label="Filter" style="margin-top:14px">
+        <button data-lib="all" aria-pressed="true" data-i18n="l_all"></button>
+        <button data-lib="photo" aria-pressed="false" data-i18n="ad_photo"></button>
+        <button data-lib="note" aria-pressed="false" data-i18n="ad_note"></button>
+        <button data-lib="sound" aria-pressed="false" data-i18n="ad_sound"></button>
+        <button data-lib="clip" aria-pressed="false" data-i18n="ad_clip"></button>
+      </div>
+      <p class="small" id="l-empty"></p>
+      <div class="grid" id="l-grid"></div>
+    </div>
+    <div id="view-together" style="display:none">
+      <p class="small" data-i18n="g_sub"></p>
+      <p class="small" data-i18n="g_wall_note"></p>
+      <div class="feed" id="g-grid"></div>
+      <p class="small" data-i18n="g_safe"></p>
+    </div>
+  </section>
+
+  <!-- ITEM -->
+  <section class="screen" id="item" aria-labelledby="t-item">
+    <button class="link" data-go="library" data-i18n="back"></button>
+    <h2 id="t-item"></h2>
+    <p class="small" id="it-meta"></p>
+    <div id="it-body"></div>
+    <label class="switch"><span data-i18n="ad_share"></span><input type="checkbox" id="it-share"></label>
+    <div class="center" style="margin-top:20px"><button class="link" id="it-del" data-i18n="it_del"></button></div>
+  </section>
+
+  <!-- ME / PROFILE -->
+  <section class="screen has-nav" id="me" aria-labelledby="t-me" style="background: linear-gradient(180deg, #F7F5F1 40%, #9CC4FF 100%);">
+    <h2 id="t-me" data-i18n="m_title"></h2>
+    <div class="prof" style="margin-top:12px">
+      <label class="photo-btn" style="cursor:pointer" aria-label="Change profile picture">
+        <span class="avatar" id="m-avatar"></span><input type="file" id="m-file" accept="image/*">
+      </label>
+      <div style="min-width:0">
+        <strong style="font-family:var(--serif);font-size:26px;font-weight:400;display:block" id="m-name"></strong>
+        <span class="small" id="m-since"></span><br>
+        <button class="link" id="m-photo-hint" style="padding:0;min-height:0;font-size:13px" data-i18n="m_photo"></button>
+      </div>
+    </div>
+    <h3 class="sub" data-i18n="m_process"></h3>
+    <div class="card">
+      <div id="m-chart" role="img" aria-label="Activity over the last 8 weeks"></div>
+      <p class="small" style="margin:4px 0 0" data-i18n="m_chart_note"></p>
+    </div>
+    <div class="grid" id="m-stats" style="margin-top:12px;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px"></div>
+    <h3 class="sub" id="h-lately" data-i18n="m_timeline"></h3>
+    <ul class="list" id="m-time"></ul>
+
+    <details class="fold"><summary data-i18n="m_edit"></summary>
+      <label class="f" for="m-pname" data-i18n="m_pname"></label><input type="text" id="m-pname" maxlength="40">
+      <p class="f" style="margin-top:14px;font-weight:600;font-size:14px" data-i18n="m_make"></p>
+      <div class="chips wrap" id="m-chips"></div>
+    </details>
+    <details class="fold"><summary data-i18n="m_settings"></summary>
+      <label class="switch" style="margin-top:0"><strong data-i18n="m_lock"></strong><input type="checkbox" id="lock-toggle"></label>
+      <p class="small" data-i18n="m_lock_d"></p>
+      <label class="switch"><strong data-i18n="m_follow"></strong><input type="checkbox" id="fu-default"></label>
+      <p class="small" data-i18n="m_private"></p>
+      <button class="link" id="m-tour" data-i18n="m_tour"></button><br>
+      <button class="link" id="m-logout" data-i18n="m_logout"></button><br>
+      <button class="link" id="clear" data-i18n="m_clear"></button>
+    </details>
+  </section>
+
+    <nav class="nav" id="nav" aria-label="Main">
+    <button data-go="home" style="--on:#F498C0"><svg viewBox="0 0 153.33 147.21" aria-hidden="true"><polygon class="m" points="79.51 45.83 101.36 14.11 92.97 51.47 123.17 40.82 94.96 68.62 137.71 70.74 87.52 85.76 116.64 107.12 77.66 93.53 44.09 133.1 56.45 88.86 23.45 101.29 50.49 70.13 15.62 57.03 59.91 52.75 70.98 21.99 79.51 45.83"/></svg><span data-i18n="nav_home"></span></button>
+    <button data-go="library" style="--on:#5E9CF2"><svg viewBox="0 0 153.33 147.21" aria-hidden="true"><path class="m" d="M6.38,104.3c.66-4.15,1.72-8.4,4.36-11.65,1.18-1.45,2.63-2.65,4.08-3.84,2.33-1.92,4.67-3.85,7.25-5.41,3.67-2.22,7.75-3.67,11.8-5.1,2.79-.99,5.59-1.98,8.5-2.56,2.91-.58,5.88-.76,8.85-.86,6.54-.22,13.2-.06,19.43,1.92,4.81,1.52,9.21,4.09,13.57,6.63,3.33,1.94,6.69,3.9,9.54,6.5,2.85,2.6,5.19,5.91,5.99,10.14-1.51,1.59-3.24,2.95-5.06,4.16-6.98,4.63-15.23,6.99-23.5,8.3-8.27,1.31-16.67,1.65-24.98,2.6-6.22.72-12.56,1.78-18.69.5-4.17-.87-8.03-2.79-11.85-4.69-3.45-1.72-7-3.51-9.27-6.64Z"/><path class="w" d="M37.12,86.17c-2.83.54-5.54,1.69-7.89,3.35-.66.47-1.3.98-2.02,1.36-.88.47-1.85.72-2.78,1.06-2.88,1.08-5.31,3.07-7.63,5.07-.43.37-.86.75-1.07,1.27-.22.52-.13,1.2.33,1.51.26.18.6.2.92.22,3.76.25,7.53.49,11.29.74,1.87.12,3.74.25,5.57.64,1.44.31,2.88.79,4.34.65.42-.04.86-.14,1.16-.44.75-.75.11-1.99-.45-2.89-1.78-2.91-2.32-6.54-1.49-9.84.27-1.05.65-2.26-.27-2.71Z"/><path class="w" d="M69.05,87.55c-.26-.09-.52.14-.46.4.56,2.27.15,4.73-.74,6.92-.96,2.38-2.45,4.51-3.87,6.66-.17.25-.34.57-.21.85.08.16.25.26.41.33,1.01.41,2.15.04,3.18-.3,2.6-.86,5.26-1.58,7.94-2.13,3.48-.72,7.09-1.19,10.22-2.88.48-.26,1.03-.75.83-1.26-.08-.2-.26-.34-.44-.47-4.96-3.67-10.75-6.05-16.88-8.1Z"/><path class="m" d="M43.08,60.48c.66-4.15,1.72-8.4,4.36-11.65,1.18-1.45,2.63-2.65,4.08-3.84,2.33-1.92,4.67-3.85,7.25-5.41,3.67-2.22,7.75-3.67,11.8-5.1,2.79-.99,5.59-1.98,8.5-2.56,2.91-.58,5.88-.76,8.85-.86,6.54-.22,13.2-.06,19.43,1.92,4.81,1.52,9.21,4.09,13.57,6.63,3.33,1.94,6.69,3.9,9.54,6.5,2.85,2.6,5.19,5.91,5.99,10.14-1.51,1.59-3.24,2.95-5.06,4.16-6.98,4.63-15.23,6.99-23.5,8.3-8.27,1.31-16.67,1.65-24.98,2.6-6.22.72-12.56,1.78-18.69.5-4.17-.87-8.03-2.79-11.85-4.69-3.46-1.72-7-3.5-9.27-6.64Z"/><path class="w" d="M73.82,42.36c-2.83.54-5.54,1.69-7.89,3.35-.66.47-1.3.98-2.02,1.36-.88.47-1.85.72-2.78,1.06-2.88,1.08-5.31,3.07-7.63,5.07-.43.37-.86.75-1.07,1.27-.22.52-.13,1.2.33,1.51.26.18.6.2.92.22,3.76.25,7.53.49,11.29.74,1.87.12,3.74.25,5.57.64,1.44.31,2.88.79,4.34.65.42-.04.86-.14,1.16-.44.75-.75.11-1.99-.45-2.89-1.78-2.91-2.32-6.54-1.49-9.84.27-1.05.64-2.26-.27-2.71Z"/><path class="w" d="M105.75,43.73c-.26-.09-.52.14-.46.4.56,2.27.15,4.73-.74,6.92-.96,2.38-2.45,4.51-3.87,6.66-.17.25-.34.57-.21.85.08.16.25.26.41.33,1.01.41,2.15.04,3.18-.3,2.6-.86,5.26-1.58,7.94-2.13,3.48-.72,7.09-1.19,10.22-2.88.48-.26,1.03-.75.83-1.26-.08-.2-.26-.34-.44-.47-4.96-3.67-10.75-6.06-16.88-8.1Z"/></svg><span data-i18n="nav_library"></span></button>
+    <button data-go="me" style="--on:#EE6A4A"><svg viewBox="0 0 153.33 147.21" aria-hidden="true"><path class="m" d="M38.3,133.78c-.95-7.3.01-14.83,2.77-21.64,1.01-2.49,2.25-4.9,2.9-7.51.45-1.77.61-3.62,1.23-5.33.87-2.38,2.59-4.33,4.29-6.2,5.7-6.26,11.85-12.32,19.29-16.37,7.44-4.07,16.38-5.97,24.51-3.57,3.07.91,5.94,2.39,8.62,4.14,6.02,3.91,11.24,9.27,14.18,15.82,2.11,4.71,2.98,9.86,3.83,14.96,1.29,7.71,2.58,15.64.86,23.28-.4,1.78-1.06,3.66-2.59,4.65-2.43,1.57-5.87-.03-7.4-2.5-1.52-2.47-1.73-5.49-2.17-8.36-.65-4.09-1.87-8.06-3.09-12-1.95-6.32-3.94-12.73-7.61-18.23-2.35-3.54-5.54-6.75-9.59-8.01-3.87-1.21-8.14-.53-11.81,1.18-3.68,1.7-6.81,4.36-9.73,7.17-6.72,6.49-12.64,14.37-14.33,23.56-.52,2.78-.63,5.64-1.31,8.38-.68,2.75-2.03,5.48-4.39,7.03-2.36,1.55-5.9,1.47-8.45-.43Z"/><path class="m" d="M85.71,64.55c5.39.15,11.17-5.01,14.19-9.47,4.4-6.5,7.08-14.6,5.33-22.26-.69-3.06-2.08-5.98-2.17-9.12-.06-1.67.36-3.5,1.69-4.52,1.85-1.42,4.73-.54,6.17,1.29,1.45,1.83,1.8,4.28,1.96,6.6.63,9.53-1.33,19.21-5.6,27.75-3.09,6.17-7.88,12.1-14.56,13.84-2.35.62-4.82.67-7.25.62-3.86-.08-7.7-.41-11.5-1.02-2.8-.44-5.64-1.04-8.08-2.49-4.31-2.58-6.71-7.44-8.1-12.27-1.09-3.78-1.69-7.71-1.4-11.63.54-7.39,4.4-14.46,10.32-18.89,5.92-4.44,13.8-6.17,21.04-4.62,2.12.46,4.21,1.19,5.97,2.45,1.4,1,2.54,2.31,3.53,3.72,3.34,4.76,4.79,10.81,3.96,16.57-.82,5.76-3.9,11.17-8.62,14.49-4.08,3.74-10.16,5.14-15.48,3.6-5.31-1.55-9.68-5.98-11.17-11.32-1.49-5.33-.07-11.39,3.63-15.5,2.88-3.21,7.13-5.24,11.44-5.12,4.31.12,8.57,2.51,10.64,6.3,2.06,3.79,1.67,8.85-1.18,12.09-1.41,1.59-3.33,2.71-5.38,3.28-1.75.49-3.68.59-5.36-.09-1.68-.68-3.06-2.3-3.13-4.11-.07-1.82,1.43-3.65,3.26-3.63,1.22.01,2.29.76,3.4,1.26,1.11.49,2.61.64,3.38-.3.35-.43.47-.99.57-1.52.41-2.27.49-4.83-.93-6.65-1.34-1.71-3.74-2.3-5.92-2.11-4.24.36-8.14,3.4-9.51,7.42-1.38,4.02-.18,8.81,2.95,11.7,2.45,2.27,5.85,3.32,9.18,3.49,1.98.1,4.02-.1,5.82-.95,2.25-1.08,3.93-3.08,5.23-5.21,3.56-5.79,4.76-13.63,1.01-19.3-.72-1.09-1.61-2.07-2.71-2.76-1.2-.75-2.59-1.11-3.97-1.39-3.88-.78-7.92-.95-11.78-.04-3.86.91-7.5,2.95-9.95,6.05-2.81,3.55-3.87,8.19-4.26,12.71-.31,3.63-.21,7.44,1.39,10.72,1.91,3.89,5.74,6.56,9.83,7.99,4.09,1.43,7.19,2.21,12.11,2.35Z"/></svg><span data-i18n="nav_me"></span></button>
+  </nav>
+</main>
+
+<button id="demo-fab" aria-label="Demo tools" aria-expanded="false">tools</button>
+<div id="demo-panel" class="ctl" role="dialog" aria-label="Demo tools">
+  <h4 data-i18n="x_test"></h4>
+  <label><input type="checkbox" id="ratings"> <span data-i18n="x_ratings"></span></label>
+  <label><input type="checkbox" id="speed"> <span data-i18n="x_speed"></span></label>
+  <label><input type="checkbox" id="expect"> <span data-i18n="x_expect"></span></label>
+  <div>
+    <button class="tbtn" id="sim3" data-i18n="x_sim"></button>
+    <button class="tbtn" id="seed" data-i18n="x_seed"></button>
+    <button class="tbtn" id="csv" data-i18n="x_csv"></button>
+  </div>
+  <p class="small" style="margin-bottom:0" data-i18n="x_testnote"></p>
+</div>
+
+<script>
+(function () {
+  var $ = function (s, r) { return (r || document).querySelector(s); };
+  var $$ = function (s, r) { return Array.prototype.slice.call((r || document).querySelectorAll(s)); };
+  var store = {
+    get: function (k, d) { try { var v = localStorage.getItem(k); return v ? JSON.parse(v) : d; } catch (e) { return d; } },
+    set: function (k, v) { try { localStorage.setItem(k, JSON.stringify(v)); return true; } catch (e) { return !store.avail(); } },
+    avail: function () { try { localStorage.setItem('unstick6.t', '1'); localStorage.removeItem('unstick6.t'); return true; } catch (e) { return false; } }
+  };
+
+  /* ================= TEXT ================= */
+  var T = {
+    optional: '(optional)', back: '← Back', easy: 'Easy', hard: 'Really hard',
+    w_sticker: 'rules optional', w_h1a: 'Make <span class="hl">something.</span>', w_h1b: 'Anything.', w_h1c: 'Even if it’s <span class="hl-green">rough.</span>',
+    w_sub: 'get unstick', w_btn: 'Start', w_note: 'You can start right now, no account needed.', w_signup: 'Sign up', w_login: 'Log in',
+    au_signup: 'Join the mess.', au_login: 'Welcome back.', au_signup_sub: 'A free account keeps your starts and your library safe, and lets you follow your own process.',
+    au_login_sub: 'Pick up where you left off.', au_name: 'Name', au_email: 'Email', au_pass: 'Password',
+    au_mail: 'Email me a prompt each month', au_create: 'Create account', au_do_login: 'Log in',
+    au_to_login: 'I already have an account', au_to_signup: 'New here? Sign up', au_skip: 'Not now, just let me start',
+    au_demo: 'Demo only: nothing is sent and your password is not saved.',
+    au_e_email: 'That email doesn’t look right.', au_e_pass: 'Use at least 8 characters for the password.', au_e_name: 'What should we call you?',
+    au_e_none: 'No account with that email on this phone. This is a demo, so accounts only live here.',
+    au_ok_signup: 'You’re in. Welcome.', au_ok_login: 'Welcome back.',
+    y_title: 'What do you make?', y_sub: 'Pick as many as you like. Prompts suggest forms you enjoy. Choose “Whatever” to keep it open.', y_go: 'Continue',
+    d_visual: 'Drawing and painting', d_illustration: 'Illustration', d_design: 'Graphic and UI design', d_photo: 'Photography', d_writing: 'Writing and poetry',
+    d_music: 'Music and sound', d_crafts: 'Crafts and textiles', d_fashion: 'Fashion', d_film: 'Film and video', d_perform: 'Dance and theater',
+    d_digital: '3D and digital art', d_food: 'Cooking', d_other: 'Whatever, surprise me',
+    ta_visual: 'a drawing', ta_illustration: 'an illustration', ta_design: 'a sketch', ta_photo: 'a photo', ta_writing: 'a few lines', ta_music: 'a tune',
+    ta_crafts: 'something made by hand', ta_fashion: 'a fashion sketch', ta_film: 'a tiny film', ta_perform: 'a movement', ta_digital: 'a digital sketch',
+    ta_food: 'a dish', ta_other: 'Any way you like', p_try: 'Try it as {x}',
+    h_hello: 'Hey {n}.', h_hello_g: 'Hey, maker.',
+    h_title: '<span class="italic">unstick</span><br>your <span class="hl">block</span>', h_q: 'What kind of trouble today?',
+    n_start: 'Nudge me', n_start_d: 'A tiny push for how you feel',
+    n_hard: 'Break a rule', n_hard_d: 'Longer and stranger',
+    n_surprise: 'Surprise me', n_surprise_d: 'No questions, zero rules',
+    h_days_none: 'Your first day is waiting.', h_days: 'You’ve made something on {n} days.', h_days_1: 'You’ve made something on 1 day.',
+    h_days_note: 'This only goes up. Missed days don’t count against you.',
+    h_acct: 'Keep your starts safe', h_acct_d: 'A free account saves your library and your process, and lets you pick up on any phone.', h_later: 'Later',
+    c_title: 'Quick, how’s it going?', c_q: 'How does starting feel right now?', c_want: 'How do you want it to feel?',
+    ck_idea: 'I have no idea what to make.', ck_worry: 'I want it to turn out well, and that’s loud.', ck_tired: 'My energy is low.', ck_pressure: 'Someone is waiting on this.', ck_none: 'None of these.',
+    wf_calm: 'Calm', wf_playful: 'Playful', wf_bold: 'Bold', wf_curious: 'Curious',
+    c_rate: 'How hard is it to start right now?', c_go: 'Hand me something', c_skip: 'Skip this',
+    p_kind: 'Tiny push', p_kind_hard: 'Rule-breaker', p_kind_wild: 'Wild card', p_phone: 'Phone down. Paper, napkin, instrument, anything.',
+    p_slip: 'You’re allowed to {x}.',
+    p_for_idea: 'No idea? This one has the ideas built in.',
+    p_for_worry: 'It’s loud in there? This one is unfair to perfect.',
+    p_for_tired: 'Low battery? This one is tiny on purpose.',
+    p_for_none: 'No questions asked. Let’s see what happens.',
+    p_for_pressure: 'Deadline energy? This one is small on purpose, and nobody is watching.',
+    p_for_want: 'Made to feel {w}.',
+    p_lock: 'Your phone locks while you make, so nothing pulls you away. Emergency exit is one long press.',
+    p_start: 'Start', p_swap: 'Not this one', p_send: 'Send to a friend',
+    t_phone: 'Phone down. Make a mess.', t_just: 'Rules are on a break.',
+    t_started: 'Tap when you start', t_started_done: 'Started ✓', t_hint: 'No need to wait. Tap the moment your pen hits the page, or you take your first step.',
+    t_keep: 'That’s the hard part. Keep going.',
+    t_coach_title: 'What is this button?', t_coach: 'Tap it the moment you begin. It’s your first small win, and it marks when the freeze broke. Your profile then shows how quickly you get going over time. Skip it if you forget, nothing breaks.', t_coach_ok: 'Got it',
+    p_how_b: 'Tip:', p_how: 'when you begin, tap the big yellow button. It’s your first small win.',
+    t_pause: 'Pause', t_resume: 'Resume', t_early: 'I’m done',
+    t_locked: 'Phone locked until the timer ends.', k_hold: 'Emergency exit: hold to unlock', k_hint: 'Press and hold for 2 seconds. Nothing is lost.',
+    u_title: 'Time!', u_q: 'Want to keep what you made?',
+    u_save: 'Save what you made', u_save_d: 'Photo, words or sound. Post it too if you like', u_skip: 'Skip',
+    u_more: 'One more minute', u_more_d: 'Rebel move. No rush',
+    u_another: 'Try another prompt', u_another_d: 'Something different', u_done: 'I’m out for now',
+    j_title: 'Your project, ten minutes.', j_body: 'Phone face down. A chime will sound.', j_back: 'I’m back',
+    a_title: 'How hard is it to start <span class="italic">now?</span>', a_go: 'Continue',
+    r_title: 'You started.', r_text: 'You gave “{p}” {m}.', r_fact: 'You got going after {t}.',
+    d_add: 'Save what you made', d_go: 'Now go make your thing. The phone can stay quiet.', d_follow: 'Check in with me in 3 days', d_again: 'Another one', d_done: 'Done for now',
+    ad_title: 'Add it to the pile.', ad_sub: 'Your library holds everything you make. Nothing here is graded.',
+    ad_photo: 'Photo', ad_note: 'Words', ad_sound: 'Sound', ad_clip: 'Clip',
+    ad_pick_clip: 'Take or choose a clip', ad_clip_note: 'Short clips only. In this demo a clip plays during this session only. The first frame stays in your library.',
+    ad_clip_err: 'That clip could not be read. Try another one.',
+    rec_start: 'Record now', rec_stop: 'Stop recording', rec_on: 'Recording… up to 25 seconds.', rec_na: 'Recording isn’t available here. Add a file instead.',
+    rec_denied: 'Microphone access was blocked. Add a file instead.', rec_big: 'That recording is too big for the demo. Try a shorter one.',
+    ad_pick_photo: 'Take or choose a photo', ad_text_label: 'Write what you made, or a few words about it.',
+    ad_pick_sound: 'Or add a file', ad_sound_note: 'Record up to 25 seconds, or add a file from your phone.',
+    ad_name: 'Name it', ad_share: 'Also post it on the wall', ad_save: 'Save',
+    ad_toobig: 'That clip is too long for the demo. Try a shorter one.', ad_full: 'Storage is full. Remove something from your library first.',
+    lh_link: 'How does this work?', lh_title: 'How your library fills up', lh1: 'Do a prompt.', lh2: 'When time is up, tap “Save what you made”: a photo, words or a sound.', lh3: 'It lands here. It only goes on the wall if you flip that switch.',
+    l_title: 'Library.', l_sub: 'Everything you save lives here. You can also add things any time.', l_add: 'Add to the pile',
+    l_mine: 'Mine', l_together: 'The wall', l_all: 'All', l_empty: 'Nothing here yet. Add a photo, some words or a sound, and it will live here.',
+    l_sample: 'Sample', it_del: 'Remove from my library', it_confirm: 'Remove this from your library?',
+    it_clip_gone: 'The clip itself is not stored in this demo. A real app would keep it.', it_when: 'Made {d}', it_with: 'from “{p}”',
+    s_title: 'Path.', s_sub: 'Optional ways to poke at your creativity. Nothing expires and nothing can break.',
+    s_map: 'Places to explore', s_map_note: '{n} of {m} places explored. Tap a place to explore it.',
+    s_ch: 'Challenges', s_ch_note: 'No deadlines. Do them when you feel like it.',
+    ch_ways: 'Make in three ways', ch_ways_d: 'Add a photo, some words and a sound to your library.',
+    ch_rule: 'Break a rule', ch_rule_d: 'Try one Rule-breaker prompt. Longer and stranger.',
+    ch_share: 'Show one rough one', ch_share_d: 'Post one unfinished piece on the wall.',
+    s_go_add: 'Add something', s_go_rule: 'Break a rule', s_done: 'Done', s_progress: '{n} of {m}',
+    g_sub: 'Warm-ups people chose to post. Usernames only. No friends, no comments.',
+    g_today: 'Everyone is making today:', g_try: 'Try it', g_send: 'Send to a friend',
+    g_today_note: 'Others may be making it too. You never have to show anything.',
+    g_wall: 'Rough wall', g_wall_note: 'Rough warm-ups, not finished work. Usernames only. No friends, no counts, no comments.',
+    g_you_meta: 'Just now', g_anon: 'Anonymous maker {n}', g_made: 'Made with “{p}”.',
+    g_you: 'You', g_metoo: 'Me too', g_metoo_on: 'Me too ✓',
+    toast_copied: 'Copied. Paste it into a message.',
+    share_text: 'Try this one with me (about {t}): “{p}: {x}”. From Unstick.',
+    f_q: 'Since your last session, did you start anything creative?',
+    f_yes: 'Yes', f_notyet: 'Not yet', f_skip: 'Skip', f_save: 'Save',
+    f_yes_q: 'What did you start? (optional)', f_no_q: 'Anything you’d like to say? (optional)',
+    m_edit: 'Edit profile', p_how_link: 'How does this work?', hw_title: 'How a round works.', hw1: 'Phone down.', hw1d: 'Use scrap: a napkin, a receipt, a voice memo, anything you don’t mind wasting.', hw2: 'Tap when you start.', hw2d: 'One tap the moment you begin. It’s your first small win, and Me shows how fast you get going.', hw3_free: 'Phone stays free.', hw3d_free: 'Use it to record, film or shoot. You can switch the lock on in Me.', hw3: 'Phone locks.', hw3d: 'It stays locked until time is up. Need out? Hold the button for 2 seconds.', hw_go_start: 'Got it, start', hw_go: 'Got it',
+    mm_b: 'Monthly Mischief', mm_d: 'A creative surprise by email or mail',
+    m_stats_note: 'Time to start is how long you take to begin after you press Start.',
+    g_safe: 'Post warm-ups only. Keep your real projects in your own library.', ad_share_note: 'Warm-ups only. Keep your real projects private.',
+    k_ex: 'Example, this month', k_ex_t: 'Theme: Edges', k_ex1: '4 prompts built around the theme', k_ex2: '1 wild card, for a day you feel brave',
+    k_ex3: '1 rule to break all month', k_ex4: 'In the box only: a mystery material and a small tool',
+    k_pick: 'How do you want it?', k_mix: 'What should the surprises be about?', k_mix_mine: 'What I make', k_mix_any: 'Anything',
+    k_based: 'Based on: {x}.', k_based_none: 'Pick what you make in Me, or switch to Anything.', k_any_line: 'A mix from every kind of making.',
+    md_visual: 'Draw it', md_design: 'Sketch it', md_writing: 'Write it', md_music: 'Hum or tap it', md_any: 'Any way you like',
+    m_places: 'Places to explore', ch_card: 'Challenge for you', ch_none: 'All challenges done. More soon.',
+    m_title: 'Me.', m_guest: 'You’re a guest', m_guest_d: 'Everything is saved on this phone only. Make an account to keep it safe.',
+    m_pname: 'Name', m_line: 'What I’m making these days', m_for: 'I’ve been making for', m_make: 'What I make',
+    m_photo: 'Change photo', m_guestname: 'Guest maker', m_since: 'Here since {d}', m_since_g: 'Just visiting',
+    y_0: 'Just starting', y_1: '1 to 3 years', y_2: '3 to 10 years', y_3: '10+ years',
+    m_process: 'My process', m_chart_note: 'Starts and things you added, per week.',
+    m_timeline: 'Lately',
+    st_days: 'days made', st_min: 'minutes making', st_lib: 'in my library', st_places: 'places explored', st_speed: 'average time to start', st_starts: 'starts',
+    m_none: 'Your first start will show up here.',
+    tl_start: 'Tried “{p}”', tl_add_photo: 'Added a photo: {p}', tl_add_note: 'Wrote: {p}', tl_add_sound: 'Added a sound: {p}', tl_add_clip: 'Added a clip: {p}', tl_untitled: 'untitled',
+    m_kit: 'Monthly mischief', m_kit_b: 'Get surprises by email or mail', m_kit_d: 'A new prompt pack each month, or a box with materials. Concept',
+    m_settings: 'Settings',
+    m_lock: 'Lock my phone while I make', m_lock_d: 'The screen locks until the timer ends so you can’t wander off. If you use your phone to record, film or shoot, leave it off. You can always unlock with a long press.',
+    m_private: 'Saved on this phone only in this demo. Private by default.', m_logout: 'Log out', m_clear: 'Clear everything on this phone', m_confirm: 'Clear all your starts, your library and your account on this phone?',
+    k_title: 'Monthly Mischief.', k_sub: 'A creative surprise once a month. It is a separate service from the app, so join only if you want it.',
+    k_email: 'By email', k_email_d: 'On the 1st of each month. Free (concept).',
+    k_box: 'By mail', k_box_d: 'A small box with materials and activities. Not built yet, so this joins a waitlist.',
+    k_none: 'No thanks', k_none_d: 'Stay in the app only.',
+    k_inside: 'What could be inside', k_fair: 'What would feel fair per month?', k_save: 'Join Monthly Mischief', k_demo: 'Concept for testing. Nothing is sent, shipped or charged.',
+    k_f0: 'Free', k_f1: 'Under $10', k_f2: '$10 to $20', k_f3: 'More than $20',
+    k_in_visual: 'An odd pen, a few paper scraps, a card that tells you to break a drawing rule.',
+    k_in_design: 'A grid pad, sticker sheets, and a constraint card that makes the brief impossible.',
+    k_in_writing: 'A deck of word cards, a postcard to write to yourself, a prompt that bans your favourite word.',
+    k_in_music: 'A pocket shaker, a rhythm card deck, a prompt to write a song using only the sounds in your kitchen.',
+    k_in_other: 'Three small materials, a rule-breaking card, and one task that asks you to swap your usual tool.',
+    k_saved: 'Saved. (Demo: nothing is sent.)', k_saved_box: 'You’re on the waitlist. (Demo: nothing is sent.)',
+    nav_home: 'Home', nav_library: 'Library', nav_me: 'Me',
+    fam_constraint: 'Limit', fam_quantity: 'Quantity', fam_body: 'Body and space', fam_break: 'Easy break',
+    fam_start: 'Start from something', fam_permission: 'Permission', fam_reframe: 'Another view', fam_concrete: 'Concrete start', fam_abstract: 'Abstract',
+    sx_constraint: 'Limits', sx_quantity: 'Quantity', sx_body: 'Body', sx_break: 'Breaks', sx_start: 'Remix', sx_permission: 'Rough', sx_reframe: 'Views', sx_concrete: 'Concrete', sx_abstract: 'Abstract',
+    sec: '{n} sec', min: '{n} min', minutes: '{n} minutes', minute: '1 minute',
+    x_title: 'What changed, and why',
+    x_test: 'Test mode (for me, not for users)', x_wording: 'Prompt wording', x_wa: 'A: direct', x_wb: 'B: playful',
+    x_ratings: 'Show ease ratings (for tests)', x_speed: 'Demo speed (timers run 10x faster)',
+    x_sim: 'Simulate 3 days later', x_seed: 'Fill with sample data', x_csv: 'Download test data (CSV)',
+    x_testnote: 'These controls are for running tests and presenting the demo. A real user would not see them.',
+    x_disclaimer: 'Demo only, not tested with real people. Accounts and the wall are concepts with no server: nothing is saved online, shared or sent.',
+    x1: '<b>Each prompt has its own look,</b> so you feel what kind of ride it is before you read a word. The stop-motion movement is only in a few places.',
+    x2: '<b>The app answers how you feel.</b> Two quick questions at check-in, then the prompt talks to you.',
+    x3: '<b>Every prompt works for anyone.</b> It only suggests a form from what you make: a drawing, a tune, a few lines, a dish.',
+    x4: '<b>How the library fills.</b> Finish a prompt, tap “Save what you made”, and it lands in Library under Mine. It goes on the wall only if you flip the post switch.',
+    x5: '<b>The wall is a simple feed of big posts,</b> easy to read on a phone. You only see a username. There are no reactions, no counts, no friends and no comments, so nobody gets ranked.',
+    x6: '<b>Places to explore live on Home</b> because they help you choose what to make. Me is for looking back.',
+    x7: '<b>Monthly Mischief is not in the app.</b> It is an untested idea for later.',
+    x8: '<b>“Tap when you start” has its own screen.</b> It is a small win for you and my main test measure. I haven’t shown it helps.',
+    x9: '<b>Changed after a simulated test with six composite personas.</b> The lock is off by default if your craft uses the phone, there is a “someone is waiting” option, you can record sound and add clips, and there are more prompts for people who don’t draw.'
+  };
+
+
+  Object.assign(T, {
+    w_h1a: 'Feeling <span class="hl">stuck?</span>', w_h1b: 'Start small.',
+    w_story: 'Unstick gives you one short task to do with your hands, for 1 to 5 minutes. It won’t fix everything. It’s just a push to help you begin, so you can get back to your own work.',
+    w_sub: '', w_sticker: '',
+    au_signup: 'Create your account', au_signup_sub: 'A free account saves your tasks and your Library.',
+    y_title: 'What do you make?', y_sub: 'Select all that apply. We’ll suggest tasks you can do with it.',
+    d_visual: 'Drawing or painting', d_illustration: 'Illustration', d_design: 'Graphic or UI design', d_photo: 'Photography', d_writing: 'Writing',
+    d_music: 'Music', d_crafts: 'Crafts', d_film: 'Film or video', d_perform: 'Dance or theater', d_other: 'Anything / not sure',
+    h_title: 'Feeling <span class="hl">stuck?</span>', h_sub: 'Pick one below. You’ll get a small task to do right now. It won’t fix everything. It’s just a push.',
+    h_q: 'What would help most?',
+    n_start: 'Give me a push', n_start_d: 'Answer 2 quick questions. Get a small task that fits.',
+    n_hard: 'Challenge me', n_hard_d: 'A longer, harder task. Up to 5 minutes.',
+    n_surprise: 'Pick for me', n_surprise_d: 'A random task. No questions.',
+    o_title: 'How Unstick works', o1: 'Tell us how you feel.', o2: 'Get one small task. You choose the timer, from 1 to 5 minutes.', o3: 'Save what you made, then go back to your own work.',
+    o_why: 'Starting is the hardest part. A small task gets your hands moving. It’s a push, not a fix.', o_ok: 'Got it',
+    h_acct: 'Keep your work safe', h_acct_d: 'A free account saves your Library. (Demo: it stays on this phone.)',
+    c_title: 'Quick check-in', c_q: 'What’s getting in the way?', c_hint: 'Select all that apply.',
+    c_want: 'What kind of task do you want?', c_req: '(required)', c_hint2: 'Select one or more.',
+    ck_idea: 'I don’t know what to make.', ck_worry: 'I’m afraid it won’t turn out well.', ck_perfect: 'I’m working on something, but perfectionism is kicking my butt.',
+    ck_tired: 'My energy is low.', ck_pressure: 'Someone is waiting on this.', ck_none: 'Nothing in particular.',
+    wf_calm: 'Calm', wf_playful: 'Fun', wf_bold: 'Bold', wf_curious: 'Curious',
+    c_go: 'Get my task',
+    p_kind: 'Small push', p_kind_hard: 'Challenge', p_kind_wild: 'Random task',
+    p_slip: 'It’s okay if it looks messy.',
+    p_for_idea: 'Good when you don’t know what to make.', p_for_worry: 'Good when you’re afraid it won’t turn out well.', p_for_perfect: 'Good when perfectionism gets in the way.',
+    p_for_tired: 'Small on purpose, for low energy.', p_for_pressure: 'Small on purpose, for when someone is waiting.', p_for_none: '',
+    p_for_want: 'You asked for a {w} task.',
+    p_how_long: 'How long?', p_expect: 'Before you start: what do you think will happen?',
+    p_lock: 'The screen locks while the timer runs, so you can focus. To leave early, press and hold the exit button for 2 seconds.',
+    p_start: 'Start timer', p_swap: 'Show me a different task',
+    t_phone: 'Phone down. Start now.', t_pause: 'Pause', t_resume: 'Resume', t_early: 'I’m done',
+    t_locked: 'Phone locked until the timer ends.', k_hold: 'Exit: press and hold',
+    u_title: 'Time’s up.', u_q: 'Want to save what you made?',
+    u_save: 'Save what you made', u_save_d: 'A photo, some words or a sound.',
+    u_more: 'Keep going 1 more minute', u_another: 'Try a different task', u_skip: 'Skip',
+    r_title: 'You did it.', r_text: 'You spent {m} on “{p}”. That counts as starting.',
+    d_feel_q: 'How does starting your own work feel now?', d_f_hard: 'Still hard', d_f_easier: 'A little easier', d_f_ready: 'Ready to go',
+    d_back_t: 'Next: go back to your work', d_back: 'Pick one small step in your own project and do it for 5 minutes. You can keep your phone down.',
+    d_add: 'Save what you made', d_follow: 'Ask me in 3 days if I started something', d_follow_d: 'You’ll get one question on Home, once. No other reminders.',
+    d_backbtn: 'I’m going back to my work', d_again: 'Another task', d_bye: 'Good luck. Come back when you need another push.',
+    ad_title: 'Save what you made', ad_sub: 'It’s saved in your Library, only for you. Nothing here is graded.', ad_saved: 'Saved to your Library. Nice work.',
+    lh_link: 'How does this work?', lh_title: 'How your Library fills up', lh1: 'Do a task.', lh2: 'When the timer ends, tap “Save what you made”.', lh3: 'It shows up here. It only goes on the wall if you turn on “Post on the wall”.',
+    l_title: 'Library.', l_sub: 'Everything you save is here.', l_add: 'Add something',
+    l_together: 'The wall', ad_share: 'Also post it on the wall',
+    g_sub: 'Short tasks that other people chose to share. Usernames only. No friends, no comments.', g_wall_note: 'These are quick warm-ups, not finished work. Usernames only. No friends, no counts, no comments.',
+    s_map: 'Try a type of task', s_map_note: 'Tap a type to try a task like it. A ✓ means you’ve tried one.',
+    sx_constraint: 'Set a limit', sx_quantity: 'Make lots', sx_body: 'Move around', sx_break: 'Take a break', sx_start: 'Start from something', sx_permission: 'Make it rough', sx_reframe: 'See it differently', sx_concrete: 'Keep it simple',
+    m_places: 'Try a type of task', ch_card: 'Your challenge',
+    ch_ways: 'Save a photo, words and a sound', ch_ways_d: 'Add one of each to your Library. They can be anything you made.',
+    ch_hard: 'Try a harder task', ch_hard_d: 'Tap “Challenge me” and finish one.', s_go_add: 'Add something', s_go_hard: 'Challenge me',
+    m_stats_note: '', st_days: 'days you made something', st_starts: 'tasks done', st_min: 'minutes making', st_easier: 'times starting felt easier after',
+    m_lock: 'Lock my phone while the timer runs', m_lock_d: 'This helps you focus. If you use your phone to record, film or take photos, leave it off. You can always exit by pressing and holding a button for 2 seconds.',
+    mm_b: 'Monthly Mischief (an idea)',
+    k_title: 'Monthly Mischief', k_sub: 'One small surprise task each month. It’s a separate subscription, not part of the app. This is only an idea, so nothing is sent.',
+    k_pick: 'Choose one:', k_email: 'By email', k_email_d: 'A new task in your inbox on the 1st of each month.', k_box: 'By mail', k_box_d: 'A small box with materials. Join the waitlist.',
+    k_save: 'Join', k_demo: 'This is a concept for testing. Nothing is sent, shipped or charged.',
+    f_q: 'Did you start anything creative since your last task?',
+    x_title: 'What changed in version 14, and why', x_expect: 'Ask “what do you think will happen?” before each task (for tests)',
+    x1: '<b>The start explains itself.</b> Feeling stuck, one short task, 1 to 5 minutes. It says it is a push, not a fix.',
+    x2: '<b>Plain names.</b> Give me a push, Challenge me, Pick for me. The word “rules” is gone.',
+    x3: '<b>Check-in is clearer.</b> You can pick more than one thing in the way, and the “what kind of task” question is required.',
+    x4: '<b>Every task is a short instruction,</b> written like you would explain it to a child. No poetry.',
+    x5: '<b>You choose the timer.</b> There is one countdown, and the “tap when you start” button is gone.',
+    x6: '<b>First-time orientation lives on Home</b> instead of a separate screen.',
+    x7: '<b>“Places to explore” is now “Try a type of task”.</b> No counts, so nobody feels behind.',
+    x8: '<b>Less on every screen.</b> The wall and Library have fewer words.',
+    x9: '<b>A real ending.</b> You say how starting feels now, and you get one clear step back to your own work.'
+  });
+
+
+  Object.assign(T, {
+    w_h1a: 'Feeling <span class="hl">stuck?</span>', w_h1b: 'Start small.',
+    w_story: 'One short task to get you started. It won’t fix everything. It’s just a push.',
+    w_btn: 'Create account', w_login: 'I already have an account',
+    au_signup_sub: 'You need an account to start.', au_login_sub: 'Log in to keep going.',
+    h_title: 'Feeling <span class="hl">stuck?</span>',
+    n_start: 'Give me a push', n_start_d: 'A task for how you feel',
+    n_hard: 'Challenge me', n_hard_d: 'A harder task',
+    n_surprise: 'Pick for me', n_surprise_d: 'A random task',
+    c_title: 'Quick check-in', c_q: 'What’s getting in the way?', c_hint: '(pick any)',
+    ck_idea: 'I don’t know what to make.', ck_perfect: 'Perfectionism is kicking my butt.', ck_tired: 'My energy is low.', ck_pressure: 'Someone is waiting on this.',
+    c_want: 'How do you want it to feel?', c_req: '(required)',
+    c_make: 'What do you want to make?', c_any: 'Anything',
+    wf_calm: 'Calm', wf_playful: 'Fun', wf_bold: 'Bold', wf_curious: 'Curious',
+    p_how_long: 'How long?', p_start: 'Next',
+    s_how: 'How to do it', s_go: 'Go',
+    s_note_lock: 'It’s okay if it looks messy. Your screen locks until the timer ends. Hold Exit for 2 seconds to leave.', s_note: 'It’s okay if it looks messy.',
+    r_title: 'You did it.', r_text: 'That counts as starting.',
+    d_feel_q: 'How does starting your own work feel now?',
+    d_backbtn: 'Back to my work', d_again: 'Another task', d_add: 'Save what you made', d_follow: 'Ask me in 3 days if I started something',
+    x_title: 'What changed in version 15, and why',
+    x1: '<b>An account is required.</b> Everyone creates one before they start.',
+    x2: '<b>Home is only the question and three buttons.</b> The explanation is in the words themselves.',
+    x3: '<b>No more “Try a type of task” or challenge card.</b> They felt generic and extra.',
+    x4: '<b>Check-in has fewer options</b> and also asks what you want to make, so the task fits.',
+    x5: '<b>You set the time</b> with a big − and + control. The refresh button gets you a different task.',
+    x6: '<b>Instructions come before the timer.</b> A screen with an illustration and 2 or 3 numbered steps, then Go.',
+    x7: '<b>The end is shorter.</b> One question, then “Back to my work”.',
+    x8: '<b>“Lately”</b> moved to Me, where you look back.',
+    x9: '<b>Everything is in short plain words.</b>'
+  });
+
+
+  Object.assign(T, {
+    w_sub2: 'Draw or write. 5 minutes or less.',
+    w_btn: 'Let’s warm up', au_create: 'I’m in',
+    w_login: 'Already have an account? Log in',
+    au_signup: 'Create your account', au_signup_sub: 'It only takes a minute.', au_login: 'Welcome back.', au_login_sub: '',
+    au_name: 'Name', au_email: 'Email', au_pass: 'Password', au_create: 'Create account', au_do_login: 'Log in',
+    au_to_login: 'Already have an account? Log in', au_to_signup: 'New here? Create account',
+    au_terms: 'By continuing, you agree to our terms.',
+    y_title: 'One quick <span class="script" style="color:#E86A4A;font-size:1.1em">thing.</span>', y_sub: 'Tell us what you make. Pick all that apply.', y_skip: 'Skip, figure it out later', y_go: 'Continue',
+    d_design: 'Design', d_music: 'Music', d_film: 'Video', d_visual: 'Visual art', d_photo: 'Photography', d_writing: 'Writing', d_other: 'Something else',
+    h_q: 'What would help most?',
+    n_start_d: 'A task for how you feel', n_hard_d: 'A harder task', n_surprise_d: 'A random task',
+    t_phone: 'Phone down. No one’s watching.',
+    r_title: 'You did it.', r_text: 'You made something. That counts as starting.',
+    ad_title: 'Save what you made.', ad_sub: 'It’s just for you. You can share it later.',
+    ad_who: 'Who can see this?', ad_me: 'Only me', ad_me_d: 'Just you', ad_wall: 'The wall', ad_wall_d: 'Shows your username. No comments.', ad_save: 'Save', ad_skip: 'Skip',
+    ad_pick_photo: 'Take or choose a photo',
+    l_together: 'The wall', g_sub: 'Short tasks people chose to share. Usernames only. No friends, no comments.', g_wall_note: '',
+    m_since: 'Member since {d}', m_make: 'What I make', st_starts: 'tasks done', st_days: 'days you made something', st_easier: 'times starting felt easier',
+    m_follow: 'Ask me in 3 days if I started something',
+    x_title: 'What changed in version 16, and why',
+    x1: '<b>Your Figma design is back:</b> gradients, colored fields, blob buttons and your tab icons.',
+    x2: '<b>Sign up and log in</b> are separate, simple and friendly. Terms line included.',
+    x3: '<b>“One quick thing”</b> uses your 7 options, and you can skip it.',
+    x4: '<b>Home</b> is the question and three buttons. No streak, no group challenge, no feed.',
+    x5: '<b>Save what you made</b> asks who can see it: only me, or the wall.',
+    x6: '<b>You did it</b> asks how starting feels now, then sends you back to your work.',
+    x7: '<b>Tabs:</b> Home, Library, Me.',
+    x8: '<b>Me</b> shows three numbers and a switch for the 3-day check-in.',
+    x9: '<b>Plain, relaxed words everywhere.</b>'
+  });
+
+  /* ================= VIBES ================= */
+  function svg(inner, vb) { return '<svg xmlns="http://www.w3.org/2000/svg" viewBox="' + (vb || '0 0 390 780') + '" preserveAspectRatio="xMidYMid slice" style="width:100%;height:100%">' + inner + '</svg>'; }
+  var VIBES = {
+    scribble: { bg: 'linear-gradient(180deg,#F7F5F1,#FFE0D2)', ink: '#141414', font: 'var(--script)', size: 66, rot: -2, shape: '55% 45% 60% 40% / 45% 55% 45% 55%', btn: '#EE6A4A',
+      deco: svg('<path d="M-10 640 C 60 560, 110 720, 180 620 S 300 540, 400 650" fill="none" stroke="#EE6A4A" stroke-width="7" stroke-linecap="round" opacity=".55"/><path d="M-10 700 C 80 650, 130 760, 220 690 S 330 640, 410 710" fill="none" stroke="#141414" stroke-width="3" stroke-linecap="round" opacity=".25"/>') },
+    wonky: { bg: 'linear-gradient(160deg,#FFE7F2,#FFF3B8)', ink: '#141414', font: 'var(--serif)', size: 56, rot: 3, shape: '62% 38% 54% 46% / 40% 62% 38% 60%', btn: '#F5A7D2', italic: true,
+      deco: svg('<circle cx="320" cy="120" r="46" fill="none" stroke="#141414" stroke-width="4" stroke-dasharray="10 12" opacity=".4"/><rect x="30" y="610" width="90" height="90" rx="10" transform="rotate(14 75 655)" fill="#F7D85F" stroke="#141414" stroke-width="3" opacity=".7"/>') },
+    remix: { bg: 'linear-gradient(135deg,#E6FFE9,#FFD9EA)', ink: '#141414', font: 'var(--serif)', size: 52, rot: -1, shape: '40px 18px 36px 14px', btn: '#8DF0A7',
+      deco: svg('<rect x="240" y="26" width="110" height="26" fill="#F7D85F" opacity=".8" transform="rotate(8 295 39)"/><rect x="20" y="640" width="120" height="26" fill="#F5A7D2" opacity=".85" transform="rotate(-10 80 653)"/><path d="M0 760 L30 740 L60 765 L95 738 L130 764 L170 740 L210 766 L250 740 L290 766 L330 742 L390 764 L390 780 L0 780Z" fill="#fff" opacity=".6"/>') },
+    count: { bg: 'radial-gradient(#9CC4FF 1.6px, transparent 1.7px) 0 0/20px 20px, #EAF3FF', ink: '#141414', font: 'var(--serif)', size: 56, rot: 0, shape: '999px', btn: '#5E9CF2',
+      deco: svg('<text x="262" y="170" font-family="Instrument Serif,serif" font-size="150" fill="#5E9CF2" opacity=".28">12</text><text x="22" y="720" font-family="Instrument Serif,serif" font-size="120" fill="#141414" opacity=".08">1 2 3</text>') },
+    walk: { bg: 'linear-gradient(180deg,#E8F6FF,#D0F6DF)', ink: '#141414', font: 'var(--script)', size: 64, rot: -1, shape: '60% 40% 50% 50% / 50% 50% 50% 50%', btn: '#8DF0A7', float: true,
+      deco: svg('<g opacity=".7" fill="#fff"><ellipse cx="90" cy="120" rx="60" ry="24"/><ellipse cx="130" cy="108" rx="40" ry="22"/><ellipse cx="300" cy="190" rx="52" ry="20"/><ellipse cx="330" cy="178" rx="34" ry="18"/></g><path d="M-10 720 C 80 690, 150 740, 240 706 S 360 690, 410 716 L410 800 L-10 800Z" fill="#B8EBCB" opacity=".8"/>') },
+    fold: { bg: 'linear-gradient(135deg,#F4EAD8 0%,#F4EAD8 49.6%,#E6D6BC 50%,#F4EAD8 50.4%,#F4EAD8 100%)', ink: '#141414', font: 'var(--serif)', size: 54, rot: 0, shape: '6px', btn: '#F7D85F',
+      deco: svg('<path d="M390 0 L390 120 L270 0Z" fill="#E6D6BC" stroke="#141414" stroke-width="2" opacity=".8"/><path d="M0 560 L390 760" stroke="#141414" stroke-width="1.5" stroke-dasharray="6 8" opacity=".3"/>') },
+    zoo: { bg: 'radial-gradient(#FFC9A5 3px, transparent 3.2px) 0 0/26px 26px, #FFEBDD', ink: '#141414', font: 'var(--serif)', size: 54, rot: 2, shape: '50%', btn: '#EE6A4A', italic: true,
+      deco: svg('<g fill="#141414" opacity=".18"><circle cx="300" cy="150" r="20"/><circle cx="350" cy="130" r="14"/><circle cx="330" cy="205" r="26"/><circle cx="60" cy="660" r="18"/><circle cx="104" cy="640" r="12"/><circle cx="90" cy="700" r="24"/></g>') },
+    color: { bg: 'radial-gradient(circle at 18% 22%,#F5A7D2 0 80px,transparent 81px), radial-gradient(circle at 84% 28%,#F7D85F 0 90px,transparent 91px), radial-gradient(circle at 56% 84%,#BFE0FF 0 110px,transparent 111px), #FBF8F2', ink: '#141414', font: 'var(--serif)', size: 56, rot: 0, shape: '999px', btn: '#F5A7D2', deco: '' },
+    type: { bg: 'repeating-linear-gradient(180deg,#FBF7EA 0,#FBF7EA 29px,#E2DAC5 30px)', ink: '#2A2A2A', font: 'var(--mono)', size: 40, rot: 0, shape: '4px', btn: '#F7D85F',
+      deco: svg('<line x1="56" y1="0" x2="56" y2="780" stroke="#EE6A4A" stroke-width="2" opacity=".5"/>') },
+    sound: { bg: 'linear-gradient(180deg,#FFEFC2,#F5D4FF)', ink: '#141414', font: 'var(--serif)', size: 56, rot: -1, shape: '999px', btn: '#F5A7D2',
+      deco: svg('<g stroke="#141414" stroke-width="2" opacity=".35"><line x1="0" y1="620" x2="390" y2="620"/><line x1="0" y1="640" x2="390" y2="640"/><line x1="0" y1="660" x2="390" y2="660"/><line x1="0" y1="680" x2="390" y2="680"/><line x1="0" y1="700" x2="390" y2="700"/></g><g fill="#141414" opacity=".6"><ellipse cx="90" cy="670" rx="11" ry="8"/><ellipse cx="170" cy="650" rx="11" ry="8"/><ellipse cx="250" cy="690" rx="11" ry="8"/></g>') },
+    void_: { bg: '#FAFAF7', ink: '#141414', font: 'var(--serif)', size: 58, rot: 0, shape: '999px', btn: '#fff', deco: '' },
+    flip: { dark: true, bg: '#141414', ink: '#F7F5F1', font: 'var(--serif)', size: 56, rot: -1, shape: '999px', btn: '#EE6A4A', italic: true,
+      deco: svg('<circle cx="320" cy="140" r="70" fill="#EE6A4A" opacity=".85"/>') },
+    speed: { bg: 'linear-gradient(180deg,#F7D85F,#FFE98A)', ink: '#141414', font: 'var(--serif)', size: 60, rot: -3, shape: '10px', btn: '#141414', btnInk: '#F7D85F',
+      deco: svg('<g stroke="#141414" stroke-width="6" opacity=".18"><line x1="-20" y1="150" x2="200" y2="40"/><line x1="40" y1="230" x2="300" y2="90"/><line x1="-20" y1="700" x2="220" y2="580"/></g>') },
+    map: { bg: 'repeating-radial-gradient(circle at 72% 28%,#E3F7D2 0,#E3F7D2 16px,#CFEEBB 16px,#CFEEBB 18px)', ink: '#141414', font: 'var(--serif)', size: 54, rot: 0, shape: '24px', btn: '#8DF0A7',
+      deco: svg('<path d="M30 640 q60 -50 120 0 t120 0" fill="none" stroke="#141414" stroke-width="2" stroke-dasharray="8 8" opacity=".4"/><text x="260" y="700" font-family="Caveat,cursive" font-size="34" fill="#141414" opacity=".45" transform="rotate(-6 260 700)">here be moods</text>') }
+  };
+
+  /* ================= PROMPTS ================= */
+  var PROMPTS = [
+    /* Help me start: you say what is in your way and how you want it to feel, we pick one of these four */
+    { id: 'c1', fam: 'constraint', secs: 60, mode: 'warm', b: ['worry', 'none'], d: ['any'], vibe: 'scribble', feel: ['playful', 'curious'], title: 'One line',
+      A: 'Draw one long, looping line without lifting your pen. Let it cross itself. Stop when the timer ends.' },
+    { id: 'c2', fam: 'constraint', secs: 60, mode: 'warm', b: ['worry', 'tired', 'pressure'], d: ['any'], vibe: 'scribble', feel: ['bold', 'calm'], title: 'Five marks',
+      A: 'Draw 5 different marks, one at a time: a dot, a straight line, a zigzag, a curl and a square. Then stop.' },
+    { id: 'c3', fam: 'constraint', secs: 60, mode: 'warm', b: ['worry', 'pressure', 'idea'], d: ['any'], vibe: 'speed', feel: ['bold', 'playful'], title: 'One take',
+      A: 'Look around and write one sentence about the first thing you see. One try. No deleting.' },
+    { id: 'p2', fam: 'start', secs: 90, mode: 'warm', b: ['idea', 'none', 'pressure'], d: ['any'], vibe: 'remix', feel: ['bold', 'curious'], title: 'Copy and change',
+      A: 'Pick one object near you. Draw it small and simple. Draw it again and change 3 things: its shape, its size and one detail.' },
+    /* Surprise me */
+    { id: 'm1', fam: 'body', secs: 180, mode: 'warm', b: [], d: ['any'], vibe: 'walk', feel: [], title: 'Walk, then write',
+      A: 'Walk around for one minute. Then write 3 short lines about what you noticed, one thing per line.' },
+    /* Make it harder */
+    { id: 'h4', fam: 'quantity', secs: 300, mode: 'hard', b: [], d: ['any'], vibe: 'count', feel: [], title: 'Ten versions',
+      A: 'Pick one object near you. Draw it 10 times, small, on one page. Make every version different.' }
+  ];
+  var WHY = {
+    c1: 'Try this when you’re afraid of getting it wrong.',
+    c2: 'Try this when a blank page feels like too much.',
+    c3: 'Try this when you keep fixing things instead of finishing.',
+    p2: 'Try this when you don’t know what to make.',
+    m1: 'Try this when your head feels stuck.',
+    h4: 'Try this when your first idea feels too obvious.'
+  };
+  PROMPTS.forEach(function (p) { p.why = WHY[p.id]; });
+  PROMPTS.forEach(function (p) { p.B = p.A; p.slip = ''; });
+
+  var STEPS = {
+    c1: ['Put your pen on the paper.', 'Draw one long, looping line without lifting your pen. Let it cross itself.', 'Stop when the timer ends.'],
+    c2: ['Draw 5 marks on the page, one at a time.', 'Make each one different: a dot, a straight line, a zigzag, a curl and a square.', 'Then stop.'],
+    c3: ['Look around. Pick the first thing you see.', 'Write one sentence about it. One try.', 'No deleting, no fixing. Then stop.'],
+    p2: ['Pick one object near you.', 'Draw it small and simple.', 'Draw it again. Change 3 things: its shape, its size and one detail.', 'Then stop.'],
+    m1: ['Stand up and walk around for 1 minute. Inside, outside, anywhere.', 'Then write 3 short lines about what you noticed. One thing per line.', 'If you finish early, add one line about the thing you liked most.'],
+    h4: ['Pick one object near you.', 'Draw it 10 times, small, in 10 boxes on one page.', 'Make every version different: change the shape, the size, the angle or the style.', 'The first ones are easy. Keep going.']
+  };
+  var ARTMAP = { c1: 'line', c2: 'five', c3: 'take', p2: 'change', m1: 'walk', h4: 'boxes' };
+  var KINDS = { c1: 'any', c2: 'any', c3: 'any', p2: 'any', m1: 'any', h4: 'any' };
+  var MEDKIND = { visual: ['visual', 'any'], illustration: ['visual', 'any'], design: ['visual', 'any'], crafts: ['visual', 'any'], photo: ['visual', 'any'], writing: ['text', 'any'], music: ['sound', 'any'], film: ['any'], perform: ['any'] };
+  PROMPTS.forEach(function (p) { p.steps = STEPS[p.id]; p.art = ARTMAP[p.id]; p.kind = KINDS[p.id]; });
+
+  function artWrap(inner) { return '<svg viewBox="0 0 200 140" aria-hidden="true" style="width:100%;height:auto;display:block"><rect x="2" y="2" width="196" height="136" rx="18" fill="#FFFDF5" stroke="#141414" stroke-width="3"/>' + inner + '</svg>'; }
+  var K = 'stroke="#141414" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"';
+  var ART = {
+    line: artWrap('<path d="M26 96 C46 28 78 124 104 64 S150 36 172 82" fill="none" ' + K.replace('3"', '5"') + '/><circle cx="26" cy="96" r="6" fill="#EE6A4A" stroke="#141414" stroke-width="2.5"/>'),
+    five: artWrap('<g fill="none" ' + K + '><path d="M32 52 l12 26"/><path d="M60 50 l12 28"/><path d="M88 52 l12 26"/><path d="M116 50 l12 28"/><path d="M144 52 l12 26"/></g><text x="100" y="116" text-anchor="middle" font-family="Helvetica,Arial,sans-serif" font-size="20" font-weight="700" fill="#141414">5</text>'),
+    bad: artWrap('<path d="M56 40 C90 22 138 34 148 66 C158 100 120 120 88 114 C52 110 36 74 56 40Z" fill="#F5A7D2" ' + K + '/><circle cx="82" cy="68" r="5" fill="#141414"/><circle cx="116" cy="62" r="8" fill="#141414"/><path d="M78 94 C94 84 112 100 126 88" fill="none" ' + K + '/>'),
+    change: artWrap('<path d="M36 92 L56 52 L76 92Z" fill="#F7D85F" ' + K + '/><path d="M92 72 H116 M108 62 l10 10 l-10 10" fill="none" ' + K + '/><path d="M134 50 L168 60 L160 98 L130 90 L124 66Z" fill="#8DF0A7" ' + K + '/>'),
+    circles: artWrap((function () { var o = '', cols = ['#F7D85F', '#F5A7D2', '#BFE0FF', '#8DF0A7']; for (var r = 0; r < 3; r++) for (var c = 0; c < 4; c++) o += '<circle cx="' + (38 + c * 42) + '" cy="' + (34 + r * 36) + '" r="14" fill="' + cols[(r + c) % 4] + '" ' + K.replace('3"', '2.5"') + '/>'; return o; })()),
+    list: artWrap('<g font-family="Helvetica,Arial,sans-serif" font-size="17" font-weight="700" fill="#141414"><text x="32" y="46">1</text><text x="32" y="76">2</text><text x="32" y="106">3</text></g><g fill="none" ' + K + '><path d="M56 42 H160"/><path d="M56 72 H140"/><path d="M56 102 H166"/></g><circle cx="170" cy="30" r="12" fill="#F7D85F" ' + K + '/>'),
+    walk: artWrap('<g fill="none" ' + K + '><path d="M40 62 H160"/><path d="M150 52 l12 10 l-12 10"/><path d="M50 52 l-12 10 l12 10"/></g><ellipse cx="76" cy="100" rx="9" ry="14" fill="#8DF0A7" ' + K + '/><ellipse cx="116" cy="94" rx="9" ry="14" fill="#8DF0A7" ' + K + '/>'),
+    fold: artWrap('<path d="M52 32 H148 V108 H52Z" fill="#F4EAD8" ' + K + '/><path d="M52 108 L148 32" stroke="#141414" stroke-width="2.5" stroke-dasharray="7 7"/><path d="M148 32 L148 70 L110 32Z" fill="#E6D6BC" ' + K + '/>'),
+    animal: artWrap('<path d="M60 52 L66 26 L86 44Z M140 52 L134 26 L114 44Z" fill="#F7D85F" ' + K + '/><circle cx="100" cy="76" r="40" fill="#F7D85F" ' + K + '/><circle cx="86" cy="70" r="5" fill="#141414"/><circle cx="114" cy="70" r="5" fill="#141414"/><path d="M92 88 Q100 96 108 88" fill="none" ' + K + '/><path d="M54 80 H72 M54 90 L72 86 M146 80 H128 M146 90 L128 86" fill="none" stroke="#141414" stroke-width="2"/>'),
+    colors: artWrap('<circle cx="78" cy="62" r="30" fill="#F5A7D2" opacity=".9" ' + K + '/><circle cx="118" cy="62" r="30" fill="#F7D85F" opacity=".9" ' + K + '/><circle cx="98" cy="94" r="30" fill="#BFE0FF" opacity=".9" ' + K + '/>'),
+    text: artWrap('<g fill="none" ' + K + '><path d="M34 46 H128"/><path d="M34 72 H112"/><path d="M34 98 H100"/></g><path d="M150 34 L170 54 L118 106 L104 110 L108 96Z" fill="#F7D85F" ' + K + '/>'),
+    sound: artWrap('<g ' + K + '><rect x="34" y="62" width="16" height="30" rx="5" fill="#F5A7D2"/><rect x="62" y="38" width="16" height="78" rx="5" fill="#F7D85F"/><rect x="90" y="52" width="16" height="50" rx="5" fill="#BFE0FF"/><rect x="118" y="30" width="16" height="92" rx="5" fill="#8DF0A7"/><rect x="146" y="60" width="16" height="34" rx="5" fill="#F5A7D2"/></g>'),
+    bulb: artWrap('<path d="M100 28 C132 28 144 60 126 82 C118 92 118 98 118 102 H82 C82 98 82 92 74 82 C56 60 68 28 100 28Z" fill="#F7D85F" ' + K + '/><path d="M86 112 H114 M90 122 H110" fill="none" ' + K + '/><path d="M100 10 V18 M52 30 l6 6 M148 30 l-6 6 M36 66 h8 M164 66 h-8" fill="none" stroke="#141414" stroke-width="2.5" stroke-linecap="round"/>'),
+    boxes: artWrap((function () { var o = '', cols = ['#F7D85F', '#F5A7D2', '#BFE0FF', '#8DF0A7', '#EE6A4A']; for (var r = 0; r < 2; r++) for (var c = 0; c < 5; c++) o += '<rect x="' + (14 + c * 36) + '" y="' + (32 + r * 48) + '" width="30" height="40" rx="5" fill="' + cols[(r * 5 + c) % 5] + '" ' + K.replace('3"', '2.5"') + '/>'; return o; })()),
+    take: artWrap('<circle cx="100" cy="70" r="44" fill="#F7D85F" ' + K + '/><text x="100" y="86" text-anchor="middle" font-family="Helvetica,Arial,sans-serif" font-size="52" font-weight="700" fill="#141414">1</text><path d="M62 112 H138" fill="none" ' + K + '/>'),
+    cut: artWrap('<path d="M24 50 H76 V90 H24Z" fill="#F7D85F" ' + K + '/><path d="M124 50 H176 V90 H124Z" fill="#F7D85F" ' + K + '/><path d="M82 50 H118 V90 H82Z" fill="none" stroke="#141414" stroke-width="2.5" stroke-dasharray="6 6"/><path d="M90 58 L110 82 M110 58 L90 82" fill="none" ' + K + '/>'),
+    shape: artWrap('<g ' + K.replace('3"', '2.5"') + '><path d="M30 60 L48 30 L66 60Z" fill="#F7D85F"/><path d="M80 96 L106 52 L132 96Z" fill="#F5A7D2"/><path d="M130 50 L142 30 L154 50Z" fill="#BFE0FF"/><path d="M40 108 L54 86 L68 108Z" fill="#8DF0A7"/><path d="M148 110 L166 80 L184 110Z" fill="#F7D85F"/></g>'),
+    opposite: artWrap('<circle cx="64" cy="70" r="30" fill="#F5A7D2" ' + K + '/><path d="M64 84 V56 M52 68 l12 -12 l12 12" fill="none" ' + K + '/><circle cx="136" cy="70" r="30" fill="#BFE0FF" ' + K + '/><path d="M136 56 V84 M124 72 l12 12 l12 -12" fill="none" ' + K + '/>'),
+    frames: artWrap('<g ' + K.replace('3"', '2.5"') + ' fill="#fff"><rect x="18" y="46" width="30" height="40" rx="4"/><rect x="54" y="46" width="30" height="40" rx="4"/><rect x="90" y="46" width="30" height="40" rx="4"/><rect x="126" y="46" width="30" height="40" rx="4"/><rect x="162" y="46" width="20" height="40" rx="4"/></g><path d="M24 70 q6 -14 18 0 M60 66 l18 12 M96 78 q12 -20 18 0 M132 64 l18 0 M132 76 l18 0" fill="none" stroke="#EE6A4A" stroke-width="3" stroke-linecap="round"/><text x="100" y="116" text-anchor="middle" font-family="Helvetica,Arial,sans-serif" font-size="16" font-weight="700" fill="#141414">10 sec each</text>'),
+    map: artWrap('<path d="M26 30 H174 V112 H26Z" fill="#E3F7D2" ' + K + '/><path d="M44 96 C64 60 84 100 108 66 S150 50 156 44" fill="none" stroke="#141414" stroke-width="3" stroke-dasharray="7 7" stroke-linecap="round"/><path d="M146 36 l14 14 M160 36 l-14 14" fill="none" stroke="#EE6A4A" stroke-width="4" stroke-linecap="round"/><ellipse cx="62" cy="48" rx="20" ry="9" fill="#fff" ' + K.replace('3"', '2"') + '/>'),
+    chair: artWrap('<path d="M70 28 V72 H132" fill="none" ' + K.replace('3"', '5"') + '/><path d="M70 72 V112 M132 72 V112" fill="none" ' + K.replace('3"', '5"') + '/><path d="M52 98 C70 82 84 112 102 96 S138 86 156 100" fill="none" stroke="#8DF0A7" stroke-width="9" stroke-linecap="round"/>'),
+    name: artWrap('<g font-family="Georgia,serif" fill="#141414"><text x="24" y="40" font-size="14">Name</text><text x="24" y="64" font-size="20" font-style="italic">Name</text><text x="24" y="92" font-size="28" font-weight="700">Name</text><text x="104" y="52" font-size="12" letter-spacing="3">NAME</text><text x="104" y="86" font-size="24" fill="#EE6A4A">Name</text></g>')
+  };
+
+
+  ART.tour1 = artWrap('<g ' + K.replace('3"', '2.5"') + '><rect x="8" y="22" width="184" height="30" rx="15" fill="#F5A7D2"/><rect x="8" y="60" width="184" height="30" rx="15" fill="#8DF0A7"/><rect x="8" y="98" width="184" height="30" rx="15" fill="#F7D85F"/></g><g font-family="Helvetica,Arial,sans-serif" font-size="11.5" font-weight="700" fill="#141414"><text x="20" y="41">I don’t know what to make</text><text x="20" y="79">Nothing feels good enough</text><text x="20" y="117">My energy is low</text></g><path d="M176 70 l5 5 l9 -12" fill="none" ' + K + '/>');
+  ART.tour2 = artWrap('<circle cx="100" cy="72" r="46" fill="#BFE0FF" ' + K + '/><path d="M86 22 H114" fill="none" ' + K + '/><path d="M100 22 V28" fill="none" ' + K + '/><text x="100" y="82" text-anchor="middle" font-family="Georgia,serif" font-size="32" font-weight="700" fill="#141414">3:00</text><path d="M162 40 l8 -8 M168 56 h10 M162 72 l8 8" fill="none" stroke="#EE6A4A" stroke-width="3.5" stroke-linecap="round"/><path d="M38 40 l-8 -8 M32 56 h-10 M38 72 l-8 8" fill="none" stroke="#EE6A4A" stroke-width="3.5" stroke-linecap="round"/>');
+  ART.tour3 = artWrap('<path d="M50 38 H134 V112 H50Z" fill="#FFFFFF" ' + K + '/><path d="M64 58 H118 M64 74 H108 M64 90 H98" fill="none" ' + K.replace('3"', '2.5"') + '/><path d="M150 40 L170 60 L124 106 L108 110 L112 94Z" fill="#F7D85F" ' + K + '/><path d="M30 28 C 24 56, 28 84, 40 100 M32 92 L40 102 L50 94" fill="none" stroke="#EE6A4A" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>');
+  var TOUR = [{ art: 'tour1', h: 'tour1_h', p: 'tour1_p' }, { art: 'tour2', h: 'tour2_h', p: 'tour2_p' }, { art: 'tour3', h: 'tour3_h', p: 'tour3_p' }];
+  var BLOCKERS = ['idea', 'perfect', 'tired', 'pressure'];
+  var WANTS = ['calm', 'playful', 'bold', 'curious'];
+  var DISC = ['design', 'music', 'film', 'visual', 'photo', 'writing', 'other'];
+  var FAMS = ['constraint', 'quantity', 'body', 'break', 'start', 'permission', 'reframe', 'concrete'];
+  function bkey(x) { return x === 'perfect' ? 'worry' : x; }
+  function defSecs(n) { return n <= 60 ? 60 : n <= 120 ? 120 : n <= 180 ? 180 : 300; }
+  var COLORS = ['#F7D85F', '#8DF0A7', '#F5A7D2', '#BFE0FF', '#F8D6C8', '#EE6A4A'];
+  var AV = ['#F5A7D2', '#F7D85F', '#8DF0A7', '#BFE0FF', '#F8D6C8'];
+
+  /* ================= STATE ================= */
+  var S = {
+    wording: store.get('unstick6.wording', 'B'), disc: store.get('unstick6.disc', []), onboarded: store.get('unstick6.onb', false),
+    user: store.get('unstick6.user', null), loggedIn: store.get('unstick6.in', false), kit: store.get('unstick6.kit', { mode: 'none', fair: '' }), dismissAcct: store.get('unstick6.dis', false),
+    screen: 'welcome', need: 'start', blockers: [], wants: [], followDefault: store.get('unstick16.fu', false), tourSeen: store.get('unstick25.tour', false), tourI: 0, makeNow: 'other', secs: 60, expect: false, expectText: '', orientSeen: store.get('unstick14.orient', false), before: null, after: null, prompt: null, speed: 1, ratings: false,
+    started: null, kept: 'no', extra: false, worked: 0, lastT: null, sim3: false, lock: store.get('unstick6.lock', true), lockSet: store.get('unstick12.lockset', false),
+    history: store.get('unstick6.history', []), items: store.get('unstick6.items', []), reacts: store.get('unstick10.reacts', {}),
+    libFilter: 'all', view: 'mine', addType: 'photo', addFor: null, addData: null, curItem: null, authMode: 'signup', tryFor: '', tryAs: 'other', howOpen: false, clips: {}, addClipUrl: '', kitMode: 'none', kitFair: '', kitMix: 'mine', addNext: '', howSeen: store.get('unstick8.how', false), howFrom: 'link'
+  };
+  var timer = null, fuChoice = null, toastTm = null;
+
+  function t(k, vars) {
+    var s = T[k] != null ? T[k] : k;
+    if (vars) Object.keys(vars).forEach(function (v) { s = s.split('{' + v + '}').join(vars[v]); });
+    return s;
+  }
+  function fmtTime(sec) { sec = Math.max(0, Math.ceil(sec)); return Math.floor(sec / 60) + ':' + ('0' + (sec % 60)).slice(-2); }
+  function label(secs) { return secs % 60 ? t('sec', { n: secs }) : t('min', { n: secs / 60 }); }
+  function dur(secs) { var m = Math.max(1, Math.round(secs / 60)); return m === 1 ? t('minute') : t('minutes', { n: m }); }
+  function ptext(p) { return p[S.wording]; }
+  function byId(id) { return PROMPTS.filter(function (p) { return p.id === id; })[0]; }
+  function saveH() { return store.set('unstick6.history', S.history); }
+  function saveI() { return store.set('unstick6.items', S.items); }
+  function saveU() { return store.set('unstick6.user', S.user); }
+  function toast(msg) {
+    var el = $('#toast'); el.textContent = msg; el.classList.add('show');
+    clearTimeout(toastTm); toastTm = setTimeout(function () { el.classList.remove('show'); }, 2800);
+  }
+  function allowed(p) {
+    if (!S.disc.length || S.disc.indexOf('other') > -1) return true;
+    return p.d.indexOf('any') > -1 || p.d.some(function (x) { return S.disc.indexOf(x) > -1; });
+  }
+  function lockOn() { return S.lock && ['music', 'film', 'photo'].indexOf(S.makeNow) < 0; }
+  function lockDefault() { return !S.disc.some(function (x) { return ['music', 'film', 'photo', 'digital'].indexOf(x) > -1; }); }
+  function dayKey(ts) { return new Date(ts).toDateString(); }
+  function madeDays() {
+    var set = {};
+    S.history.forEach(function (h) { set[dayKey(h.t)] = 1; });
+    S.items.forEach(function (i) { if (!i.sample) set[dayKey(i.t)] = 1; });
+    return set;
+  }
+
+  /* ================= TEXT APPLY ================= */
+  function applyText() {
+    $$('[data-i18n]').forEach(function (el) { el.textContent = t(el.getAttribute('data-i18n')); });
+    $$('[data-i18n-html]').forEach(function (el) { el.innerHTML = t(el.getAttribute('data-i18n-html')); });
+    $$('[data-wording]').forEach(function (b) { b.setAttribute('aria-pressed', String(b.dataset.wording === S.wording)); });
+    $('#rates-before').setAttribute('aria-label', t('c_rate'));
+    $('#rates-after').setAttribute('aria-label', t('a_title').replace(/<[^>]+>/g, ''));
+  }
+
+  /* ================= NAVIGATION ================= */
+  var NAVS = ['home', 'library', 'me'];
+  function go(id) {
+    if (!S.loggedIn && id !== 'welcome' && id !== 'auth') id = 'welcome';
+    stopTimer();
+    S.screen = id;
+    $$('.screen').forEach(function (el) { el.classList.toggle('active', el.id === id); });
+    if (id !== 'timer') $('#timer').classList.remove('locked');
+    var scr = $('#' + id); scr.scrollTop = 0;
+    $('#nav').classList.toggle('show', NAVS.indexOf(id) > -1);
+    $$('#nav button').forEach(function (b) {
+      if (b.dataset.go === id) b.setAttribute('aria-current', 'page'); else b.removeAttribute('aria-current');
+    });
+    (render[id] || function () {})();
+    var h = scr.querySelector('h1, h2, .script'); if (h) { h.setAttribute('tabindex', '-1'); h.focus({ preventScroll: true }); }
+  }
+
+  /* ================= TIMER ================= */
+  function stopTimer() { if (timer) { clearInterval(timer.id); timer = null; } }
+  function startTimer(secs, el, onDone, count) {
+    stopTimer();
+    var remaining = secs * 1000, last = Date.now();
+    timer = { paused: false, total: secs, remaining: remaining };
+    el.textContent = fmtTime(secs);
+    timer.id = setInterval(function () {
+      var now = Date.now();
+      if (!timer.paused) remaining -= (now - last) * S.speed;
+      last = now; timer.remaining = remaining;
+      el.textContent = fmtTime(remaining / 1000);
+      if (remaining <= 0) { var tm = timer; stopTimer(); if (count) S.worked += tm.total; chime(); onDone(); }
+    }, 200);
+  }
+  function elapsed() { return timer ? Math.round(timer.total - Math.max(0, timer.remaining) / 1000) : 0; }
+  function chime() {
+    try {
+      var Ctx = window.AudioContext || window.webkitAudioContext, ctx = new Ctx();
+      [587, 784].forEach(function (f, i) {
+        var tt = ctx.currentTime + i * 0.2, o = ctx.createOscillator(), g = ctx.createGain();
+        o.frequency.value = f; o.connect(g); g.connect(ctx.destination);
+        g.gain.setValueAtTime(0.0001, tt);
+        g.gain.exponentialRampToValueAtTime(0.2, tt + 0.03);
+        g.gain.exponentialRampToValueAtTime(0.0001, tt + 0.4);
+        o.start(tt); o.stop(tt + 0.45);
+      });
+      if (navigator.vibrate) navigator.vibrate([150, 80, 150]);
+    } catch (e) {}
+  }
+  function applyLock(which) {
+    var scr = $('#' + which);
+    scr.classList.toggle('locked', lockOn());
+    if (which === 'timer') { $('#t-controls').style.display = lockOn() ? 'none' : ''; $('#t-lockbox').style.display = lockOn() ? '' : 'none'; }
+    else { $('#j-controls').style.display = lockOn() ? 'none' : ''; $('#j-lockbox').style.display = lockOn() ? '' : 'none'; }
+  }
+  function attachHold(btn, onDone) {
+    var tm = null;
+    function start() { if (tm) return; btn.classList.add('holding'); tm = setTimeout(function () { tm = null; btn.classList.remove('holding'); onDone(); }, 2000); }
+    function cancel() { if (tm) { clearTimeout(tm); tm = null; } btn.classList.remove('holding'); }
+    btn.addEventListener('pointerdown', function (e) { e.preventDefault(); start(); });
+    ['pointerup', 'pointerleave', 'pointercancel', 'blur'].forEach(function (ev) { btn.addEventListener(ev, cancel); });
+    btn.addEventListener('keydown', function (e) { if ((e.key === ' ' || e.key === 'Enter') && !e.repeat) { e.preventDefault(); start(); } });
+    btn.addEventListener('keyup', function (e) { if (e.key === ' ' || e.key === 'Enter') cancel(); });
+  }
+
+  /* ================= PICKING ================= */
+  var START_IDS = ['c1', 'c2', 'c3', 'p2'];
+  function pickPrompt(excludeId) {
+    if (S.need === 'hard') return byId('h4');
+    if (S.need === 'surprise') return byId('m1');
+    var pool = START_IDS.map(byId);
+    if (S.wants.length) { var g = pool.filter(function (p) { return p.feel.some(function (x) { return S.wants.indexOf(x) > -1; }); }); if (g.length) pool = g; }
+    var bl = S.blockers.map(bkey).filter(function (x) { return x !== 'none'; });
+    if (bl.length) { var bp = pool.filter(function (p) { return p.b.some(function (x) { return bl.indexOf(x) > -1; }); }); if (bp.length) pool = bp; }
+    var rest = pool.filter(function (p) { return p.id !== excludeId; });
+    if (!rest.length) rest = START_IDS.map(byId).filter(function (p) { return p.id !== excludeId; });
+    if (rest.length) pool = rest;
+    return pool[Math.floor(Math.random() * pool.length)];
+  }
+  function buildRates(host, onPick) {
+    host.innerHTML = '';
+    for (var i = 1; i <= 5; i++) {
+      var b = document.createElement('button');
+      b.className = 'rate'; b.textContent = i; b.setAttribute('aria-pressed', 'false');
+      b.addEventListener('click', (function (n) { return function () {
+        $$('.rate', host).forEach(function (x) { x.setAttribute('aria-pressed', String(Number(x.textContent) === n)); });
+        onPick(n);
+      }; })(i));
+      host.appendChild(b);
+    }
+  }
+
+  /* ================= ART ================= */
+  function doodleSvg(i, withNs) {
+    var c = COLORS[i % COLORS.length], k = i % 4, s = '';
+    if (k === 0) s = '<path d="M20 120 C 40 20, 80 150, 100 60 S 150 40, 180 100" fill="none" stroke="#141414" stroke-width="5" stroke-linecap="round"/>';
+    if (k === 1) s = '<circle cx="60" cy="70" r="26" fill="none" stroke="#141414" stroke-width="5"/><circle cx="125" cy="70" r="20" fill="none" stroke="#141414" stroke-width="5"/><circle cx="95" cy="125" r="24" fill="none" stroke="#141414" stroke-width="5"/>';
+    if (k === 2) s = '<path d="M30 40 L170 50 M40 90 L150 100 M30 140 L160 130" stroke="#141414" stroke-width="6" stroke-linecap="round"/><circle cx="100" cy="95" r="8" fill="#141414"/>';
+    if (k === 3) s = '<path d="M100 30 L150 120 L50 120 Z" fill="none" stroke="#141414" stroke-width="5" stroke-linejoin="round"/><path d="M60 145 Q100 165 140 145" fill="none" stroke="#141414" stroke-width="5" stroke-linecap="round"/>';
+    return '<svg ' + (withNs ? 'xmlns="http://www.w3.org/2000/svg" ' : '') + 'viewBox="0 0 200 180" aria-hidden="true" preserveAspectRatio="xMidYMid slice"><rect width="200" height="180" fill="' + c + '"/>' + s + '</svg>';
+  }
+  function svgUrl(i) { return 'data:image/svg+xml;utf8,' + encodeURIComponent(doodleSvg(i, true)); }
+  function waveSvg(i) {
+    var c = COLORS[i % COLORS.length], bars = '';
+    var hs = [30, 60, 90, 50, 110, 70, 40, 100, 60, 30, 80, 50];
+    hs.forEach(function (h, j) { bars += '<rect x="' + (14 + j * 15) + '" y="' + (90 - h / 2) + '" width="8" height="' + h + '" rx="4" fill="#141414"/>'; });
+    return '<svg viewBox="0 0 200 180" aria-hidden="true"><rect width="200" height="180" fill="' + c + '"/>' + bars + '</svg>';
+  }
+  function tileInner(it, meta) {
+    var art = '<div class="art"></div><div class="cap"><b></b><span class="small"></span></div>';
+    return { html: art, fill: function (root) {
+      var a = root.querySelector('.art');
+      if (it.type === 'photo') { var im = document.createElement('img'); im.src = it.data; im.alt = it.title || ''; a.appendChild(im); }
+      else if (it.type === 'note') { a.style.background = COLORS[(it.t || 0) % COLORS.length]; a.innerHTML = '<div class="words"></div>'; a.querySelector('.words').textContent = it.data; }
+      else if (it.type === 'clip') { var cim = document.createElement('img'); cim.src = it.data; cim.alt = it.title || ''; a.appendChild(cim); var pb = document.createElement('span'); pb.className = 'playbadge'; pb.textContent = '\u25B6'; a.appendChild(pb); }
+      else { a.innerHTML = waveSvg((it.t || 0) % 6); }
+      root.querySelector('b').textContent = it.title || t('tl_untitled');
+      root.querySelector('.small').textContent = meta || '';
+    } };
+  }
+
+  /* ================= SCREENS ================= */
+  function followDue() {
+    var now = Date.now();
+    return S.history.filter(function (h) { return h.follow && !h.fu && (S.sim3 || now - h.t >= 3 * 864e5); })[0];
+  }
+  function dName() { return (S.user && S.user.name) ? S.user.name : ''; }
+  function drawAvatar(host, size) {
+    host.innerHTML = '';
+    if (S.user && S.user.avatar) { var im = document.createElement('img'); im.src = S.user.avatar; im.alt = ''; host.appendChild(im); host.style.background = ''; }
+    else { var n = dName() || '?'; host.textContent = n.charAt(0).toUpperCase(); host.style.background = AV[n.length % AV.length]; }
+  }
+
+  var render = {
+    auth: function () {
+      var su = S.authMode === 'signup';
+      $('#t-auth').innerHTML = t(su ? 'au_signup' : 'au_login'); $('#auth-why').textContent = su ? t('au_why') : '';
+      $('#auth-sub').textContent = t(su ? 'au_signup_sub' : 'au_login_sub');
+      $('#auth-name-wrap').style.display = su ? '' : 'none';
+      $('#auth-go').textContent = t(su ? 'au_create' : 'au_do_login');
+      $('#auth-toggle').textContent = t(su ? 'au_to_login' : 'au_to_signup');
+      $('#a-pass').autocomplete = su ? 'new-password' : 'current-password';
+      $('#auth-form').className = su ? 'signup' : 'login';
+      $('#a-name').placeholder = 'a nickname is fine'; $('#a-email').placeholder = 'your email'; $('#a-pass').placeholder = su ? 'make a password' : 'password';
+      $('#a-hint').textContent = su ? t('au_pass_hint') : '';
+      $('#auth-err').textContent = '';
+    },
+    home: function () {
+      var due = followDue();
+      $('#fu-card').style.display = due ? '' : 'none';
+      if (due) { $('#f-more').style.display = 'none'; $('#f-choices').style.display = ''; }
+      $('#h-hello').textContent = dName() ? t('h_hello', { n: dName() }) : t('h_hello_g');
+    },
+    checkin: function () {
+      S.before = null; S.blockers = []; S.wants = [];
+      $('#rate-before-wrap').style.display = S.ratings ? '' : 'none';
+      buildRates($('#rates-before'), function (n) { S.before = n; });
+      function multi(host, id, list, key) {
+        var c = document.createElement('button');
+        c.className = 'chip'; c.setAttribute('aria-pressed', 'false');
+        c.addEventListener('click', function () {
+          var on = c.getAttribute('aria-pressed') !== 'true';
+          var i = list.indexOf(id); if (on && i < 0) list.push(id); if (!on && i > -1) list.splice(i, 1);
+          c.setAttribute('aria-pressed', String(on)); updateGo();
+        });
+        c.dataset.id = id; c.textContent = t(key + id);
+        host.appendChild(c);
+      }
+      var host = $('#blockers'); host.innerHTML = '';
+      BLOCKERS.forEach(function (id) { multi(host, id, S.blockers, 'ck_'); });
+      var wh = $('#wants'); wh.innerHTML = '';
+      WANTS.forEach(function (id) { multi(wh, id, S.wants, 'wf_'); });
+      var mine = S.disc.filter(function (x) { return x !== 'other'; });
+      var needsPhone = mine.filter(function (x) { return ['music', 'film', 'photo'].indexOf(x) > -1; })[0];
+      S.makeNow = mine.length === 1 ? mine[0] : (needsPhone || 'other');
+      updateGo();
+    },
+    prompt: function () {
+      var p = S.prompt, v = VIBES[p.vibe] || VIBES.scribble, scr = $('#prompt');
+      scr.style.background = v.bg; scr.style.color = v.ink;
+      $('#p-deco').innerHTML = v.deco || '';
+      var h = $('#t-prompt'); h.style.fontFamily = v.font; h.style.fontSize = Math.min(v.size, 46) + 'px'; h.style.fontStyle = v.italic ? 'italic' : 'normal';
+      h.style.transform = 'rotate(' + v.rot + 'deg)'; h.style.transformOrigin = 'left center'; h.style.lineHeight = '1';
+      h.classList.toggle('float', !!v.float);
+      var sb = $('#p-start'); sb.style.background = v.btn; sb.style.borderRadius = v.shape; sb.style.color = v.btnInk || '#141414';
+      $('#p-kind').textContent = p.mode === 'hard' ? t('p_kind_hard') : p.mode === 'wild' ? t('p_kind_wild') : t('p_kind');
+      h.textContent = p.title;
+      $('#p-art').innerHTML = ART[p.art] || '';
+      $('#p-why').textContent = p.why || '';
+      if (S.tryFor !== p.id) { S.tryFor = p.id; $('#p-expect').value = ''; }
+      S.secs = defSecs(p.secs);
+      $('#p-time').textContent = 'Just ' + (S.secs / 60) + (S.secs === 60 ? ' minute.' : ' minutes.');
+      $('#p-swap').style.display = S.need === 'start' ? '' : 'none';
+      $('#p-expect-wrap').style.display = S.expect ? '' : 'none';
+    },
+    you: function () {
+      var COL = { design: '#F7D85F', music: '#8DF0A7', film: '#EE6A4A', visual: '#F5A7D2', photo: '#6FA8F5', writing: '#F7D85F', other: '#EE6A4A' };
+      var host = $('#y-chips'); host.innerHTML = '';
+      DISC.forEach(function (id) {
+        var c = document.createElement('button');
+        c.className = 'chip'; c.textContent = t('d_' + id); c.style.setProperty('--c', COL[id]); c.dataset.id = id;
+        c.setAttribute('aria-pressed', String(S.disc.indexOf(id) > -1));
+        c.addEventListener('click', function () {
+          var i = S.disc.indexOf(id);
+          if (i > -1) S.disc.splice(i, 1);
+          else if (id === 'other') S.disc = ['other'];
+          else { S.disc = S.disc.filter(function (x) { return x !== 'other'; }); S.disc.push(id); }
+          $$('.chip', host).forEach(function (x) { x.setAttribute('aria-pressed', String(S.disc.indexOf(x.dataset.id) > -1)); });
+        });
+        host.appendChild(c);
+      });
+    },
+    tour: function () {
+      var d = TOUR[S.tourI];
+      $('#tour-kick').textContent = (S.tourFirst && S.tourI === 0 && dName()) ? 'Welcome, ' + dName() + '.' : t('tour_kicker');
+      $('#tour-art').innerHTML = ART[d.art]; $('#t-tour').textContent = t(d.h); $('#tour-text').textContent = t(d.p);
+      var dots = $('#tour-dots'); dots.innerHTML = '';
+      TOUR.forEach(function (x, i) { var e = document.createElement('i'); if (i === S.tourI) e.className = 'on'; dots.appendChild(e); });
+      $('#tour-next').textContent = t(S.tourI === TOUR.length - 1 ? 'tour_done' : 'tour_next');
+    },
+    steps: function () {
+      var p = S.prompt, v = VIBES[p.vibe] || VIBES.scribble, scr = $('#steps');
+      scr.style.background = v.bg; scr.style.color = v.ink;
+      $('#s-deco').innerHTML = v.deco || '';
+      var h = $('#t-steps'); h.style.fontFamily = v.font; h.style.fontStyle = v.italic ? 'italic' : 'normal'; h.textContent = p.title;
+      var gb = $('#s-go'); gb.style.background = v.btn; gb.style.borderRadius = v.shape; gb.style.color = v.btnInk || '#141414';
+      $('#s-art').innerHTML = ART[p.art] || '';
+      var ol = $('#s-list'); ol.innerHTML = '';
+      p.steps.forEach(function (x) { var li = document.createElement('li'); li.textContent = x; ol.appendChild(li); });
+      $('#s-note').textContent = t(lockOn() ? 's_note_lock' : 's_note');
+    },
+    timer: function () {
+      var p = S.prompt, v = VIBES[p.vibe] || VIBES.scribble, scr = $('#timer');
+      scr.style.background = lockOn() ? '' : v.bg; scr.style.color = lockOn() ? '' : v.ink;
+      $('#t-deco').innerHTML = v.deco || '';
+      applyLock('timer');
+      $('#t-pause').textContent = t('t_pause');
+      $('#t-task').textContent = p.steps.map(function (x, i) { return (i + 1) + '. ' + x; }).join('\n');
+      startTimer(S.extra ? 60 : S.secs, $('#clock'), function () { go('timeup'); }, true);
+    },
+    after: function () {
+      S.after = null; $('#a-go').disabled = true;
+      buildRates($('#rates-after'), function (n) { S.after = n; $('#a-go').disabled = false; });
+    },
+    done: function () {
+      var e = S.history[0]; if (!e) return;
+      var DL = { c1: 'You drew one long line. That counts as starting.', c2: 'You drew five marks. That counts as starting.', c3: 'You wrote one sentence in one try. That counts as starting.', p2: 'You drew something twice and changed it. That counts as starting.', m1: 'You walked, then wrote. That counts as starting.', h4: 'You drew ten versions. That counts as starting.' };
+      if (DL[e.id]) $('#d-text').textContent = DL[e.id];
+      $('#d-follow').checked = !!e.follow;
+      var da = $('#d-again'); if (S.need === 'hard') { da.dataset.need = 'surprise'; da.textContent = 'Surprise me'; } else { da.dataset.need = 'hard'; da.textContent = 'Make it harder'; }
+      var fh = $('#d-feel'); fh.innerHTML = '';
+      ['hard', 'easier', 'ready'].forEach(function (k) {
+        var b = document.createElement('button'); b.className = 'chip'; b.textContent = t('d_f_' + k); b.setAttribute('aria-pressed', String(e.feel === k));
+        b.addEventListener('click', function () { e.feel = k; saveH(); $$('.chip', fh).forEach(function (x, j) { x.setAttribute('aria-pressed', String(['hard', 'easier', 'ready'][j] === k)); }); });
+        fh.appendChild(b);
+      });
+    },
+    add: function () {
+      S.addData = null;
+      $('#ad-title').value = ''; $('#ad-text').value = ''; $('#ad-share').checked = false;
+      $$('[data-who]').forEach(function (b) { b.setAttribute('aria-pressed', String(b.dataset.who === 'me')); });
+      $('#ad-prev-photo').style.display = 'none'; $('#ad-prev-sound').style.display = 'none'; $('#ad-prev-clip').style.display = 'none'; S.addClipUrl = '';
+      $('#ad-file-photo').value = ''; $('#ad-file-sound').value = '';
+      var def = S.disc.length === 1 && S.disc[0] === 'writing' ? 'note' : S.disc.length === 1 && S.disc[0] === 'music' ? 'sound' : 'photo';
+      setAddType(def);
+      $('#ad-title').placeholder = S.addFor ? byId(S.addFor).title : '';
+    },
+    library: function () {
+      $$('[data-view]').forEach(function (b) { b.setAttribute('aria-pressed', String(b.dataset.view === S.view)); });
+      $('#view-mine').style.display = S.view === 'mine' ? '' : 'none';
+      $('#l-how').style.display = (S.items.length === 0 || S.howOpen) ? '' : 'none';
+      $('#view-together').style.display = S.view === 'together' ? '' : 'none';
+      if (S.view === 'together') return renderTogether();
+      $$('[data-lib]').forEach(function (b) { b.setAttribute('aria-pressed', String(b.dataset.lib === S.libFilter)); });
+      var grid = $('#l-grid'); grid.innerHTML = '';
+      var items = S.items.filter(function (i) { return S.libFilter === 'all' || i.type === S.libFilter; });
+      $('#l-empty').textContent = items.length ? '' : t('l_empty');
+      items.forEach(function (it) {
+        var meta = new Date(it.t).toLocaleDateString('en', { month: 'short', day: 'numeric' }) + (it.sample ? ' · ' + t('l_sample') : ' · ' + (it.shared ? 'Wall' : 'Only me'));
+        var ti = tileInner(it, meta), b = document.createElement('button'); b.className = 'tile'; b.innerHTML = ti.html; ti.fill(b);
+        b.setAttribute('aria-label', it.title || it.type);
+        b.addEventListener('click', function () { S.curItem = it.id; go('item'); });
+        grid.appendChild(b);
+      });
+    },
+    item: function () {
+      var it = S.items.filter(function (x) { return x.id === S.curItem; })[0]; if (!it) return go('library');
+      $('#t-item').textContent = it.title || t('tl_untitled');
+      var meta = [t('it_when', { d: new Date(it.t).toLocaleDateString('en', { month: 'long', day: 'numeric' }) })];
+      if (it.promptId && byId(it.promptId)) meta.push(t('it_with', { p: byId(it.promptId).title }));
+      $('#it-meta').textContent = meta.join(' · ');
+      var body = $('#it-body'); body.innerHTML = '';
+      if (it.type === 'photo') { var im = document.createElement('img'); im.className = 'preview'; im.src = it.data; im.alt = it.title || ''; body.appendChild(im); }
+      else if (it.type === 'note') { var c = document.createElement('div'); c.className = 'card yellow'; c.style.whiteSpace = 'pre-wrap'; c.textContent = it.data; body.appendChild(c); }
+      else if (it.type === 'clip') {
+        var cv = document.createElement('video'); cv.controls = true; cv.playsInline = true; cv.style.cssText = 'width:100%;border:2.5px solid var(--ink);border-radius:20px;margin-top:12px';
+        if (S.clips[it.id]) { cv.src = S.clips[it.id]; cv.poster = it.data; body.appendChild(cv); }
+        else { var cp = document.createElement('img'); cp.className = 'preview'; cp.src = it.data; cp.alt = it.title || ''; body.appendChild(cp); var cn = document.createElement('p'); cn.className = 'small'; cn.textContent = t('it_clip_gone'); body.appendChild(cn); }
+      }
+      else if (it.data) { var a = document.createElement('audio'); a.controls = true; a.src = it.data; a.style.width = '100%'; body.appendChild(a); }
+      $('#it-share').checked = !!it.shared;
+    },
+    me: function () {
+      var u = S.user;
+      $('#lock-toggle').checked = S.lock; $('#fu-default').checked = !!S.followDefault;
+      drawAvatar($('#m-avatar'));
+      $('#m-name').textContent = dName() || t('m_guestname');
+      $('#m-since').textContent = (S.loggedIn && u) ? t('m_since', { d: new Date(u.since).toLocaleDateString('en', { month: 'short', year: 'numeric' }) }) : t('m_since_g');
+      $('#m-pname').value = dName();
+      var host = $('#m-chips'); host.innerHTML = '';
+      DISC.forEach(function (id) {
+        var c = document.createElement('button');
+        c.className = 'chip'; c.textContent = t('d_' + id); c.setAttribute('aria-pressed', String(S.disc.indexOf(id) > -1));
+        c.addEventListener('click', function () {
+          var i = S.disc.indexOf(id); if (i > -1) S.disc.splice(i, 1); else S.disc.push(id);
+          store.set('unstick6.disc', S.disc); if (!S.lockSet) { S.lock = lockDefault(); store.set('unstick6.lock', S.lock); $('#lock-toggle').checked = S.lock; } c.setAttribute('aria-pressed', String(S.disc.indexOf(id) > -1));
+        });
+        host.appendChild(c);
+      });
+      drawChart(); drawStats(); drawTimeline();
+    }
+  };
+
+
+  function ensureUser() { if (!S.user) { S.user = { name: '', email: '', since: Date.now(), avatar: '' }; } }
+
+  function drawChart() {
+    var weeks = [0, 0, 0, 0, 0, 0, 0, 0], now = Date.now();
+    S.history.forEach(function (h) { var w = Math.floor((now - h.t) / (7 * 864e5)); if (w >= 0 && w < 8) weeks[w]++; });
+    S.items.forEach(function (i) { if (i.sample) return; var w = Math.floor((now - i.t) / (7 * 864e5)); if (w >= 0 && w < 8) weeks[w]++; });
+    var max = Math.max(1, Math.max.apply(null, weeks)), bars = '';
+    for (var i = 0; i < 8; i++) {
+      var v = weeks[7 - i], h = Math.round(v / max * 70), x = 8 + i * 40;
+      bars += '<rect x="' + x + '" y="' + (84 - h) + '" width="28" height="' + Math.max(h, 3) + '" rx="6" fill="' + (v ? '#EE6A4A' : '#E8E3D8') + '" stroke="#141414" stroke-width="2"/>';
+      bars += '<text x="' + (x + 14) + '" y="' + (80 - h) + '" text-anchor="middle" font-size="11" fill="#141414">' + (v || '') + '</text>';
+      bars += '<text x="' + (x + 14) + '" y="102" text-anchor="middle" font-size="10" fill="#444">' + (i === 7 ? 'now' : '-' + (7 - i) + 'w') + '</text>';
+    }
+    $('#m-chart').innerHTML = '<svg viewBox="0 0 330 108" style="width:100%;height:auto" role="presentation">' + bars + '</svg>';
+  }
+  function drawStats() {
+    var days = Object.keys(madeDays()).length, mins = Math.round(S.history.reduce(function (a, h) { return a + (h.worked || 0); }, 0) / 60);
+    var got = {}; S.history.forEach(function (h) { got[h.fam] = 1; });
+    var easier = S.history.filter(function (h) { return h.feel === 'easier' || h.feel === 'ready'; }).length;
+    var data = [[S.history.length, 'st_starts'], [days, 'st_days'], [easier, 'st_easier']];
+    var host = $('#m-stats'); host.innerHTML = '';
+    data.forEach(function (d) {
+      var c = document.createElement('div'); c.className = 'card pink'; c.style.padding = '12px 10px'; c.style.textAlign = 'center';
+      c.innerHTML = '<span style="font-family:var(--serif);font-size:34px;line-height:1;display:block"></span><span class="small"></span>';
+      c.children[0].textContent = d[0]; c.children[1].textContent = t(d[1]); host.appendChild(c);
+    });
+  }
+  function drawTimeline() {
+    var ev = [];
+    S.history.forEach(function (h) { ev.push({ t: h.t, text: t('tl_start', { p: byId(h.id).title }) }); });
+    S.items.forEach(function (i) { if (i.sample) return; var nm = i.title || t('tl_untitled'); ev.push({ t: i.t, text: t('tl_add_' + i.type, { p: nm }) }); });
+    ev.sort(function (a, b) { return b.t - a.t; });
+    var ul = $('#m-time'); ul.innerHTML = '';
+    $('#h-lately').style.display = ev.length ? '' : 'none'; ul.style.display = ev.length ? '' : 'none';
+    ev.slice(0, 5).forEach(function (x) {
+      var li = document.createElement('li');
+      li.innerHTML = '<div class="head"><span></span><span class="small"></span></div>';
+      li.querySelector('.head span').textContent = x.text;
+      li.querySelector('.small').textContent = new Date(x.t).toLocaleDateString('en', { month: 'short', day: 'numeric' });
+      ul.appendChild(li);
+    });
+  }
+  var WALLUSERS = ['@nube', '@tinta.lenta', '@lu.rayas', '@pablo_p', '@rio.mmm', '@mimi'];
+  function wallName() {
+    var n = ((S.user && S.user.name) || '').toLowerCase().replace(/[^a-z0-9]+/g, '');
+    return '@' + (n || 'you');
+  }
+  function avatarSvg(i) {
+    var c = COLORS[i % COLORS.length];
+    return '<svg viewBox="0 0 40 40" aria-hidden="true"><rect width="40" height="40" fill="' + c + '"/><circle cx="14" cy="17" r="2.6" fill="#141414"/><circle cx="26" cy="17" r="2.6" fill="#141414"/><path d="M12 26 Q20 32 28 26" fill="none" stroke="#141414" stroke-width="2.4" stroke-linecap="round"/></svg>';
+  }
+  function postEl(en, idx) {
+    var it = en.item, w = document.createElement('article'); w.className = 'post';
+    var pt = it.promptId && byId(it.promptId) ? byId(it.promptId).title : (it.title || t('tl_untitled'));
+    var h = document.createElement('div'); h.className = 'ph';
+    h.innerHTML = '<span class="pav"></span><div><strong></strong><span class="small"></span></div><span class="ptag tag"></span>'; h.querySelector('.ptag').textContent = pt;
+    h.querySelector('.pav').innerHTML = avatarSvg(idx);
+    h.querySelector('strong').textContent = en.mine ? wallName() : WALLUSERS[idx % WALLUSERS.length];
+    h.querySelector('.small').textContent = en.meta;
+    w.appendChild(h);
+    var m = document.createElement('div'); m.className = 'pm';
+    if (it.type === 'photo' || it.type === 'clip') {
+      var im = document.createElement('img'); im.src = it.data; im.alt = pt; m.appendChild(im);
+      if (it.type === 'clip') { var pb = document.createElement('span'); pb.className = 'playbadge'; pb.textContent = '\u25B6'; m.appendChild(pb); }
+    } else if (it.type === 'note') {
+      m.style.background = COLORS[(it.t || 0) % COLORS.length]; m.innerHTML = '<div class="pnote"></div>'; m.querySelector('.pnote').textContent = it.data;
+    } else { m.innerHTML = waveSvg((it.t || 0) % 6); }
+    w.appendChild(m);
+    if (it.type === 'sound' && it.data) { var pa = document.createElement('div'); pa.className = 'paudio'; var au = document.createElement('audio'); au.controls = true; au.src = it.data; pa.appendChild(au); w.appendChild(pa); }
+    return w;
+  }
+  function renderTogether() {
+    var grid = $('#g-grid'); grid.innerHTML = '';
+    var entries = [];
+    S.items.forEach(function (i) { if (i.shared && !i.sample) entries.push({ key: 'me' + i.id, item: i, meta: t('g_you_meta'), mine: true }); });
+    [
+      { key: 's1', item: { type: 'photo', data: svgUrl(0), title: 'One line', t: 0 } },
+      { key: 's2', item: { type: 'note', data: 'A lighthouse wearing a sleeping bag.', title: 'Six-word story', t: 1 } },
+      { key: 's3', item: { type: 'photo', data: svgUrl(1), title: '12 circles', t: 2 } },
+      { key: 's4', item: { type: 'sound', data: '', title: 'Make 3 sounds', t: 3 } },
+      { key: 's5', item: { type: 'note', data: 'The kettle sings in B flat, but only when nobody listens.', title: 'Overheard', t: 4 } },
+      { key: 's6', item: { type: 'photo', data: svgUrl(2), title: 'Do it badly', t: 5 } }
+    ].forEach(function (x) { x.meta = t('l_sample'); entries.push(x); });
+    entries.forEach(function (en, idx) { grid.appendChild(postEl(en, idx)); });
+  }
+
+  /* ================= FLOW ================= */
+  function recordEntry() {
+    var e = { t: Date.now(), id: S.prompt.id, fam: S.prompt.fam, wording: S.wording, checkin: S.blockers.join('+'), want: S.wants.join('+'), mode: S.need,
+      before: S.before, after: S.after, started: S.started, kept: S.kept, worked: S.worked, follow: false, fu: '', fuNote: '', feel: '', expect: S.expectText || '' };
+    e.follow = !!S.followDefault;
+    S.history.unshift(e); saveH(); return e;
+  }
+  function finish() {
+    if (S.ratings && S.before && S.after == null && S.screen !== 'after') { go('after'); return; }
+    var e = S.history[0] && S.history[0].t === S.lastT ? S.history[0] : recordEntry();
+    S.lastT = e.t; if (S.after) { e.after = S.after; saveH(); }
+    go('done');
+  }
+  function sharePrompt(p) {
+    var text = t('share_text', { t: label(p.secs), p: p.title, x: ptext(p) });
+    if (navigator.share) { navigator.share({ text: text }).catch(function () {}); return; }
+    try { navigator.clipboard.writeText(text).then(function () { toast(t('toast_copied')); }, function () { toast(text); }); }
+    catch (e) { toast(text); }
+  }
+
+  function setAddType(type) {
+    S.addType = type; S.addData = type === 'note' ? '' : null;
+    $$('[data-addtype]').forEach(function (b) { b.setAttribute('aria-pressed', String(b.dataset.addtype === type)); });
+    $('#ad-photo').style.display = type === 'photo' ? '' : 'none';
+    $('#ad-note').style.display = type === 'note' ? '' : 'none';
+    $('#ad-sound').style.display = type === 'sound' ? '' : 'none';
+    $('#ad-clip').style.display = type === 'clip' ? '' : 'none';
+    updateRec();
+    updateSave();
+  }
+  var rec = null, recChunks = [], recTimer = null;
+  function updateRec() {
+    var on = rec && rec.state === 'recording';
+    $('#rec-btn').textContent = t(on ? 'rec_stop' : 'rec_start');
+    $('#rec-status').textContent = on ? t('rec_on') : '';
+  }
+  function updateSave() {
+    var ok = S.addType === 'note' ? $('#ad-text').value.trim().length > 0 : !!S.addData;
+    $('#ad-save').disabled = !ok;
+  }
+  function compress(file, max, cb) {
+    var rd = new FileReader();
+    rd.onload = function () {
+      var im = new Image();
+      im.onload = function () {
+        var sc = Math.min(1, max / Math.max(im.width, im.height)), cv = document.createElement('canvas');
+        cv.width = Math.round(im.width * sc); cv.height = Math.round(im.height * sc);
+        cv.getContext('2d').drawImage(im, 0, 0, cv.width, cv.height);
+        cb(cv.toDataURL('image/jpeg', 0.72));
+      };
+      im.src = rd.result;
+    };
+    rd.readAsDataURL(file);
+  }
+
+  /* ================= EVENTS ================= */
+  document.addEventListener('click', function (e) {
+    var w = e.target.closest('[data-wording]');
+    if (w) { S.wording = w.dataset.wording; store.set('unstick6.wording', S.wording); applyText(); if (S.screen === 'prompt') render.prompt(); return; }
+    var lb = e.target.closest('[data-lib]');
+    if (lb) { S.libFilter = lb.dataset.lib; return render.library(); }
+    var vw = e.target.closest('[data-view]');
+    if (vw) { S.view = vw.dataset.view; return render.library(); }
+    var at = e.target.closest('[data-addtype]');
+    if (at) { return setAddType(at.dataset.addtype); }
+    var tg = e.target.closest('[data-go],[data-need],[data-back]');
+    if (!tg) return;
+    if (tg.dataset.need) {
+      S.need = tg.dataset.need; S.secsTouched = false; if (S.need !== 'start') S.makeNow = 'other';
+      if (S.need === 'start') return go('checkin');
+      S.blockers = []; S.wants = []; S.before = null; S.prompt = pickPrompt(); return go('prompt');
+    }
+    if (tg.dataset.go) return go(tg.dataset.go);
+    if (tg.hasAttribute('data-back')) return go('home');
+  });
+
+  /* welcome + auth */
+  $('#w-start').addEventListener('click', function () { S.authMode = 'signup'; go('auth'); });
+  $('#w-login').addEventListener('click', function () { S.authMode = 'login'; go('auth'); });
+  $('#auth-back').addEventListener('click', function () { go('welcome'); });
+  $('#auth-toggle').addEventListener('click', function () { S.authMode = S.authMode === 'signup' ? 'login' : 'signup'; render.auth(); });
+  $('#auth-form').addEventListener('submit', function (e) {
+    e.preventDefault();
+    var name = $('#a-name').value.trim(), email = $('#a-email').value.trim(), pass = $('#a-pass').value, err = $('#auth-err');
+    var su = S.authMode === 'signup';
+    if (su && !name) { err.textContent = t('au_e_name'); return $('#a-name').focus(); }
+    if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)) { err.textContent = t('au_e_email'); return $('#a-email').focus(); }
+    if (pass.length < 8) { err.textContent = t('au_e_pass'); return $('#a-pass').focus(); }
+    $('#a-pass').value = '';   /* the demo never keeps the password */
+    if (su) {
+      ensureUser(); S.user.name = name; S.user.email = email; S.user.since = Date.now();
+      saveU(); S.loggedIn = true; store.set('unstick6.in', true); toast(t('au_ok_signup'));
+    } else {
+      if (!S.user || S.user.email.toLowerCase() !== email.toLowerCase()) { err.textContent = t('au_e_none'); return; }
+      S.loggedIn = true; store.set('unstick6.in', true); toast(t('au_ok_login'));
+    }
+    S.onboarded = true; store.set('unstick6.onb', true); S.tourI = 0; S.tourFirst = false;
+    if (su) { S.disc = []; store.set('unstick6.disc', S.disc); go('you'); } else go(S.tourSeen ? 'home' : 'tour');
+  });
+  $$('[data-who]').forEach(function (b) { b.addEventListener('click', function () { $('#ad-share').checked = b.dataset.who === 'wall'; $$('[data-who]').forEach(function (x) { x.setAttribute('aria-pressed', String(x === b)); }); }); });
+  $('#ad-skip').addEventListener('click', function () { var nx = S.addNext; S.addNext = ''; S.addFor = null; if (nx === 'done') finish(); else if (nx === 'backdone') go('done'); else go('library'); });
+  function doneYou() { S.onboarded = true; store.set('unstick6.onb', true); store.set('unstick6.disc', S.disc); if (!S.lockSet) { S.lock = lockDefault(); store.set('unstick6.lock', S.lock); } S.tourI = 0; S.tourFirst = true; go('tour'); }
+  $('#y-go').addEventListener('click', doneYou);
+  $('#y-skip').addEventListener('click', function () { S.disc = []; doneYou(); });
+  function finishTour() { S.tourSeen = true; S.tourFirst = false; store.set('unstick25.tour', true); go('home'); }
+  $('#tour-next').addEventListener('click', function () { if (S.tourI >= TOUR.length - 1) finishTour(); else { S.tourI++; render.tour(); } });
+  $('#tour-skip').addEventListener('click', finishTour);
+  $('#m-tour').addEventListener('click', function () { S.tourI = 0; S.tourFirst = false; go('tour'); });
+  $('#fu-default').addEventListener('change', function () { S.followDefault = this.checked; store.set('unstick16.fu', S.followDefault); });
+
+  /* core flow */
+  function updateGo() { $('#go-prompt').disabled = !S.wants.length; }
+  $('#go-prompt').addEventListener('click', function () { if (!S.wants.length) return; S.prompt = pickPrompt(); go('prompt'); });
+  $('#p-swap').addEventListener('click', function () { S.prompt = pickPrompt(S.prompt.id); render.prompt(); });
+  $('#st-back').addEventListener('click', function () { go('prompt'); });
+  $('#s-go').addEventListener('click', function () { beginRound(); });
+  function beginRound() { S.started = null; S.kept = 'no'; S.extra = false; S.worked = 0; S.lastT = null; S.after = null; go('timer'); }
+  $('#p-start').addEventListener('click', function () { S.expectText = S.expect ? $('#p-expect').value.trim() : ''; go('steps'); });
+  $('#t-pause').addEventListener('click', function () {
+    if (!timer) return; timer.paused = !timer.paused; this.textContent = timer.paused ? t('t_resume') : t('t_pause');
+  });
+  $('#t-early').addEventListener('click', function () { if (timer) S.worked += elapsed(); stopTimer(); go('timeup'); });
+  attachHold($('#t-hold'), function () { if (timer) S.worked += elapsed(); stopTimer(); go('timeup'); });
+  $('#lock-toggle').addEventListener('change', function () { S.lock = this.checked; S.lockSet = true; store.set('unstick6.lock', S.lock); store.set('unstick12.lockset', true); });
+  $('#u-more').addEventListener('click', function () { S.kept = 'yes'; S.extra = true; go('timer'); });
+  $('#u-save').addEventListener('click', function () {
+    var e = (S.history[0] && S.history[0].t === S.lastT) ? S.history[0] : recordEntry();
+    S.lastT = e.t; S.addFor = e.id; S.addNext = 'done'; go('add');
+  });
+  $('#u-done').addEventListener('click', function () { S.lastT = null; finish(); });
+  $('#a-go').addEventListener('click', function () { finish(); });
+  $('#speed').addEventListener('change', function () { S.speed = this.checked ? 10 : 1; });
+  $('#expect').addEventListener('change', function () { S.expect = this.checked; if (S.screen === 'prompt') render.prompt(); });
+  $('#d-back').addEventListener('click', function () { toast(t('d_bye')); go('home'); });
+  $('#ratings').addEventListener('change', function () { S.ratings = this.checked; });
+  $('#d-follow').addEventListener('change', function () { if (S.history[0]) { S.history[0].follow = this.checked; saveH(); } });
+  $('#d-add').addEventListener('click', function () { S.addFor = S.history[0] ? S.history[0].id : null; S.addNext = 'backdone'; go('add'); });
+
+  /* add + items */
+  $('#l-how-toggle').addEventListener('click', function () { S.howOpen = !S.howOpen; render.library(); });
+  $('#l-add').addEventListener('click', function () { S.addFor = null; S.addNext = ''; go('add'); });
+  $('#add-back').addEventListener('click', function () { go(S.addNext === 'done' ? 'timeup' : S.addNext === 'backdone' ? 'done' : 'library'); });
+  $('#ad-file-photo').addEventListener('change', function () {
+    var f = this.files && this.files[0]; if (!f) return;
+    compress(f, 520, function (url) { S.addData = url; var p = $('#ad-prev-photo'); p.src = url; p.style.display = ''; updateSave(); });
+  });
+  $('#ad-file-sound').addEventListener('change', function () {
+    var f = this.files && this.files[0]; if (!f) return;
+    if (f.size > 500 * 1024) { toast(t('ad_toobig')); this.value = ''; return; }
+    var rd = new FileReader();
+    rd.onload = function () { S.addData = rd.result; var a = $('#ad-prev-sound'); a.src = rd.result; a.style.display = ''; updateSave(); };
+    rd.readAsDataURL(f);
+  });
+  $('#rec-btn').addEventListener('click', function () {
+    if (rec && rec.state === 'recording') { rec.stop(); return; }
+    if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia || !window.MediaRecorder) { toast(t('rec_na')); return; }
+    navigator.mediaDevices.getUserMedia({ audio: true }).then(function (stream) {
+      recChunks = [];
+      rec = new MediaRecorder(stream, { audioBitsPerSecond: 48000 });
+      rec.ondataavailable = function (e) { if (e.data && e.data.size) recChunks.push(e.data); };
+      rec.onstop = function () {
+        stream.getTracks().forEach(function (tr) { tr.stop(); }); clearTimeout(recTimer);
+        var blob = new Blob(recChunks, { type: rec.mimeType || 'audio/webm' });
+        if (blob.size > 700 * 1024) { toast(t('rec_big')); updateRec(); return; }
+        var rd = new FileReader();
+        rd.onload = function () { S.addData = rd.result; var a = $('#ad-prev-sound'); a.src = rd.result; a.style.display = ''; updateSave(); };
+        rd.readAsDataURL(blob); updateRec();
+      };
+      rec.start(); updateRec();
+      recTimer = setTimeout(function () { if (rec && rec.state === 'recording') rec.stop(); }, 25000);
+    }, function () { toast(t('rec_denied')); });
+  });
+  $('#ad-file-clip').addEventListener('change', function () {
+    var f = this.files && this.files[0]; if (!f) return;
+    var url = URL.createObjectURL(f), tmp = document.createElement('video');
+    tmp.muted = true; tmp.playsInline = true; tmp.preload = 'auto'; tmp.src = url;
+    tmp.addEventListener('loadeddata', function () { try { tmp.currentTime = Math.min(0.5, (tmp.duration || 1) / 2); } catch (e) {} });
+    tmp.addEventListener('seeked', function () {
+      var w = tmp.videoWidth || 480, h = tmp.videoHeight || 270, sc = Math.min(1, 480 / Math.max(w, h)), cv = document.createElement('canvas');
+      cv.width = Math.round(w * sc); cv.height = Math.round(h * sc);
+      cv.getContext('2d').drawImage(tmp, 0, 0, cv.width, cv.height);
+      S.addData = cv.toDataURL('image/jpeg', 0.7); S.addClipUrl = url;
+      var v = $('#ad-prev-clip'); v.src = url; v.style.display = ''; updateSave();
+    }, { once: true });
+    tmp.addEventListener('error', function () { toast(t('ad_clip_err')); });
+  });
+  $('#ad-text').addEventListener('input', updateSave);
+  $('#ad-save').addEventListener('click', function () {
+    var data = S.addType === 'note' ? $('#ad-text').value.trim() : S.addData; if (!data) return;
+    var it = { id: 'i' + Date.now(), t: Date.now(), type: S.addType, data: data, title: $('#ad-title').value.trim() || (S.addFor ? byId(S.addFor).title : ''),
+      promptId: S.addFor || '', shared: $('#ad-share').checked };
+    S.items.unshift(it);
+    if (S.addType === 'clip' && S.addClipUrl) S.clips[it.id] = S.addClipUrl;
+    if (!saveI()) { S.items.shift(); toast(t('ad_full')); return; }
+    S.addFor = null; S.view = 'mine';
+    toast(t('ad_saved'));
+    if (S.addNext === 'done') { S.addNext = ''; finish(); } else if (S.addNext === 'backdone') { S.addNext = ''; go('done'); } else go('library');
+  });
+  $('#it-share').addEventListener('change', function () {
+    var it = S.items.filter(function (x) { return x.id === S.curItem; })[0]; if (it) { it.shared = this.checked; saveI(); }
+  });
+  $('#it-del').addEventListener('click', function () {
+    if (!confirm(t('it_confirm'))) return;
+    S.items = S.items.filter(function (x) { return x.id !== S.curItem; }); saveI(); go('library');
+  });
+
+  /* profile */
+  $('#m-pname').addEventListener('input', function () { ensureUser(); S.user.name = this.value.trim(); saveU(); $('#m-name').textContent = dName() || t('m_guestname'); drawAvatar($('#m-avatar')); });
+  $('#m-file').addEventListener('change', function () {
+    var f = this.files && this.files[0]; if (!f) return;
+    compress(f, 200, function (url) { ensureUser(); S.user.avatar = url; saveU(); drawAvatar($('#m-avatar')); });
+  });
+  $('#m-photo-hint').addEventListener('click', function () { $('#m-file').click(); });
+  $('#m-logout').addEventListener('click', function () { S.loggedIn = false; store.set('unstick6.in', false); go('welcome'); toast('Logged out.'); });
+
+  /* follow-up card */
+  $('#f-choices').addEventListener('click', function (e) {
+    var b = e.target.closest('[data-fu]'); if (!b) return;
+    fuChoice = b.dataset.fu;
+    if (fuChoice === 'skip') return saveFollow();
+    $('#f-note-label').textContent = t(fuChoice === 'yes' ? 'f_yes_q' : 'f_no_q');
+    $('#f-choices').style.display = 'none'; $('#f-more').style.display = ''; $('#f-note').focus();
+  });
+  $('#f-save').addEventListener('click', saveFollow);
+  function saveFollow() {
+    var h = followDue();
+    if (h) { h.fu = fuChoice; h.fuNote = $('#f-note').value.trim(); saveH(); }
+    $('#f-note').value = ''; render.home();
+  }
+
+  $('#clear').addEventListener('click', function () {
+    if (!confirm(t('m_confirm'))) return;
+    S.history = []; S.items = []; S.user = null; S.loggedIn = false; S.kit = { mode: 'none', fair: '' }; S.dismissAcct = false;
+    saveH(); saveI(); store.set('unstick6.user', null); store.set('unstick6.in', false); store.set('unstick6.kit', S.kit); store.set('unstick6.dis', false);
+    go('welcome');
+  });
+  $('#sim3').addEventListener('click', function () { S.sim3 = true; go('home'); });
+  $('#seed').addEventListener('click', function () {
+    var now = Date.now(), d = 864e5;
+    var fam = ['constraint', 'quantity', 'start', 'permission'], pids = ['c2', 'm1', 'h4', 'c2', 'm1', 'c2', 'h4'];
+    var seeds = [
+      { type: 'photo', data: svgUrl(0), title: 'One line on the bus', age: 0 },
+      { type: 'note', data: 'The streetlight blinked twice, like it was thinking about something it would not say.', title: 'Overheard', age: 1 },
+      { type: 'photo', data: svgUrl(1), title: 'Twelve circles', age: 2 },
+      { type: 'note', data: 'A bakery that only sells yesterday.', title: 'Six words', age: 9 },
+      { type: 'photo', data: svgUrl(2), title: 'Make it wonky', age: 12 },
+      { type: 'photo', data: svgUrl(3), title: 'Cloud chair', age: 18 }
+    ];
+    seeds.forEach(function (s, i) { S.items.push({ id: 'seed' + i + now, t: now - s.age * d, type: s.type, data: s.data, title: s.title, promptId: '', shared: false, sample: false }); });
+    pids.forEach(function (id, i) {
+      var p = byId(id);
+      S.history.push({ t: now - (i * 3 + 1) * d, id: id, fam: p.fam, wording: 'B', checkin: '', want: '', mode: 'start', before: null, after: null, started: 8 + i, kept: 'no', worked: p.secs, follow: false, fu: '', fuNote: '', feel: i % 2 ? 'easier' : 'ready', expect: '' });
+    });
+    S.history.sort(function (a, b) { return b.t - a.t; }); S.items.sort(function (a, b) { return b.t - a.t; });
+    ensureUser(); if (!S.user.name) S.user.name = 'Daniela';
+    S.user.since = now - 30 * d; S.loggedIn = true; if (!S.disc.length) { S.disc = ['visual', 'writing']; store.set('unstick6.disc', S.disc); }
+    S.onboarded = true; store.set('unstick6.onb', true); store.set('unstick6.in', true);
+    saveH(); saveI(); saveU(); go('me');
+  });
+  $('#csv').addEventListener('click', function () {
+    var cols = ['date', 'wording', 'mode', 'checkin', 'want', 'prompt', 'family', 'ease_before', 'ease_after', 'seconds_to_start',
+      'kept_going', 'seconds_worked', 'felt_after', 'expectation', 'followup_wanted', 'followup', 'followup_note'];
+    var q = function (v) { v = v == null ? '' : String(v); return '"' + v.replace(/"/g, '""') + '"'; };
+    var rows = S.history.map(function (h) {
+      return [new Date(h.t).toISOString(), h.wording, h.mode, h.checkin, h.want, h.id, h.fam, h.before, h.after, h.started, h.kept,
+        h.worked, h.feel, h.expect, h.follow, h.fu, h.fuNote].map(q).join(',');
+    });
+    var blob = new Blob([cols.join(',') + '\n' + rows.join('\n')], { type: 'text/csv' });
+    var a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = 'unstick-test-data.csv';
+    document.body.appendChild(a); a.click(); a.remove();
+  });
+
+  Object.assign(T, {
+    au_signup: 'Who are <span class="hl">you?</span>', au_signup_sub: 'We’re almost friends.',
+    au_login: 'Welcome <span class="hl-green">back.</span>', au_login_sub: 'Good to see you.',
+    au_why: 'Your account saves what you make, just for you.',
+    y_sub: 'So we can pick warm-ups that fit you. Pick any.',
+    tour_kicker: 'How it works', tour_skip: 'Skip', tour_next: 'Next', tour_done: 'Got it', m_tour: 'See how it works',
+    tour1_h: 'Tell us how you feel.', tour1_p: 'Pick what’s getting in your way.',
+    tour2_h: 'Do a tiny warm-up.', tour2_p: 'We set a short timer for you. Phone down. No one’s watching.',
+    tour3_h: 'Then get back to your work.', tour3_p: 'That’s it. Then back to what you were doing.'
+  });
+  T.m_lock_d = 'This helps you focus. It turns itself off when you pick music, video or photography, because you need your phone for those.';
+  T.au_create = 'I’m in'; T.w_btn = 'Create account';
+  Object.assign(T, {
+    h_q: 'How do you want to start?',
+    n_start: 'Help me start', n_start_d: 'Tell us how you feel. We pick one.',
+    n_surprise: 'Surprise me', n_surprise_d: 'No questions. Just go.',
+    n_hard: 'Make it harder', n_hard_d: 'A tougher one.',
+    hc_lab: 'Your challenge', hc_go: 'Try it', hc_new: 'A kind you haven’t tried yet.', hc_all: 'You’ve tried every kind.', hc_again: 'Pick any one to do again.',
+    hc_zero: 'Each dot is a different kind of warm-up.', hc_one: 'You’ve tried 1 kind so far.', hc_n: 'You’ve tried {n} kinds so far.',
+    hm_t: 'Monthly Mischief', hm_d: 'A creative surprise, once a month.', hm_join: 'Join',
+    h_note: 'One warm-up won’t fix everything. It’s just a push.',
+    ck_perfect: 'Nothing feels good enough.'
+  });
+  T.o2 = 'Get one small task. We set a short timer for you.';
+  T.c_make = 'Which one today?'; T.y_title = 'One quick<br><span class="th">thing.</span>'; T.y_sub = 'Tell us what you make. Pick any.'; T.y_go = 'Let’s go';
+  T.au_signup = 'Nice to meet <span class="hl">you.</span>'; T.au_signup_sub = 'What do your friends call you?';
+  T.au_why = 'So your stuff is here when you’re back.'; T.au_terms = ''; T.au_pass_hint = '8 characters or more.';
+  Object.keys(T).forEach(function (k) {
+    if (typeof T[k] === 'string') T[k] = T[k].replace(/\btasks\b/g, 'warm-ups').replace(/\bTasks\b/g, 'Warm-ups').replace(/\btask\b/g, 'warm-up').replace(/\bTask\b/g, 'Warm-up');
+  });
+  if (/[?&]demo=1/.test(location.search)) {
+    document.body.classList.add('demo');
+    $('#demo-fab').addEventListener('click', function () {
+      var p = $('#demo-panel'); p.classList.toggle('open'); this.setAttribute('aria-expanded', String(p.classList.contains('open')));
+    });
+  }
+  applyText();
+})();
+</script>
+</body>
+</html>
